@@ -1,0 +1,34 @@
+-- block structure example
+
+do $$
+<<first_block>>
+declare
+	user_count integer := 0;
+begin
+	-- get the number of films
+	select count(*) into user_count
+	from user_api_user;
+
+	-- display a message
+	raise notice 'The number of users is %', user_count;
+end first_block $$;
+
+
+-- subblock example
+
+do
+$$
+<<outer>>
+declare
+	x int = 0;
+begin
+	x = x + 1;
+	<<inner>>
+	declare
+		y int = 2;
+	begin
+		y = y + x;
+		raise notice 'x=% y=%', x, y;
+	end inner;
+end outer;
+$$
