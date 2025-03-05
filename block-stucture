@@ -13,7 +13,7 @@ begin
 	raise notice 'The number of users is %', user_count;
 end first_block $$;
 
-
+ 
 -- subblock example
 
 do
