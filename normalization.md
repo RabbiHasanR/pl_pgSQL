@@ -350,6 +350,7 @@ All partial dependencies are removed! ✅
 
 - **`course_name` is NOT a candidate key.**
 - **Instructor depends on `course_name` alone (non-prime attribute), violating BCNF!**
+- **Cource name depends on instructor_name column.here course_name is primary key. so when key column depends on non key column then its violating BCNF!**
 
 ---
 
@@ -413,3 +414,94 @@ If all students drop "Mathematics", **lose who teaches it!**
 
 ---
 
+
+
+
+# 📘 4th Normal Form (4NF) in Database Normalization
+
+## 🧠 What is 4NF?
+
+4th Normal Form is a level of database normalization that addresses **multivalued dependencies**.  
+A relation is in **4NF** if:
+
+1. It is in **Boyce-Codd Normal Form (BCNF)**.
+2. It has **no multivalued dependencies** (MVDs).
+
+---
+
+## 🧪 Example Table (Violating 4NF)
+
+| student_id | skill         | hobby         |
+|:----------:|:-------------:|:-------------:|
+| S01        | Python        | Chess         |
+| S01        | Java          | Chess         |
+| S01        | Python        | Painting      |
+| S01        | Java          | Painting      |
+
+---
+
+### 🎯 Issue:
+- A student can have **multiple skills** and **multiple hobbies** independently.
+- This creates **multivalued dependencies**:
+  - `student_id →→ skill`
+  - `student_id →→ hobby`
+- Every combination of skill and hobby is stored — **causing redundancy**.
+
+---
+
+## ⚠️ Anomalies in 4NF Violation:
+
+### 🔁 **Insert Anomaly:**
+- Cannot add a new skill or hobby independently.
+- Example: Adding `"C++"` as a skill for `S01` requires pairing it with **all hobbies**.
+
+### 🛑 **Delete Anomaly:**
+- Deleting a skill-hobby pair may result in loss of unrelated information.
+- Example: Deleting `(Python, Chess)` may accidentally remove knowledge of `"Python"` if it's the last occurrence.
+
+### ✏️ **Update Anomaly:**
+- If a student improves a skill (e.g., renaming `"Java"` to `"Java SE"`), this change must be updated in **every row where that skill is paired with a hobby**.
+- **Risk:** Missing any row leads to **inconsistent data**.
+
+---
+
+## ✅ Decomposition into 4NF
+
+### 📄 **Student Skills Table**
+
+| student_id | skill   |
+|:----------:|:-------:|
+| S01        | Python  |
+| S01        | Java    |
+
+---
+
+### 📄 **Student Hobbies Table**
+
+| student_id | hobby     |
+|:----------:|:---------:|
+| S01        | Chess     |
+| S01        | Painting  |
+
+---
+
+## ✔️ Benefits of 4NF
+
+- Eliminates **multivalued dependencies**
+- Prevents **insert, update, and delete anomalies**
+- Reduces **redundancy**
+- Improves **data consistency**
+
+---
+
+## 📌 Summary:
+
+| Normal Form | Focus Area                   |
+|-------------|------------------------------|
+| 1NF         | Atomic values (no repeating groups) |
+| 2NF         | No partial dependencies       |
+| 3NF         | No transitive dependencies    |
+| BCNF        | Every determinant is a candidate key |
+| **4NF**     | No multivalued dependencies   |
+
+---
