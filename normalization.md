@@ -64,7 +64,7 @@ with avobe example show how normalization organize data and reduce or remove red
 
 
 # types of normalization
-    normalization has many types like 1st form, 2nd form, 3rd form etc.
+    normalization has many types like 1st form, 2nd form, 3rd form, bcnf, 4th form, 5th form etc.
 
 
 # 1st normal form
@@ -505,3 +505,107 @@ A relation is in **4NF** if:
 | **4NF**     | No multivalued dependencies   |
 
 ---
+
+
+
+
+
+# 📗 5th Normal Form (5NF) – Project-Join Normal Form (PJNF)
+
+## 🧠 What is 5NF?
+
+A relation is in **5th Normal Form (5NF)** or **Project-Join Normal Form (PJNF)** when:
+
+1. It is already in **4NF**.
+2. It cannot be **further decomposed** into two or more **smaller relations** without **loss of data** when joined back.
+
+5NF deals with **join dependencies** and ensures **lossless join decomposition**.
+
+---
+
+## 🧪 Example: Table Violating 5NF
+
+Let’s say a company stores relationships between **Consultants**, **Projects**, and **Technologies** used.
+
+| consultant | project     | technology   |
+|:----------:|:-----------:|:------------:|
+| Alice      | Banking App | Java         |
+| Alice      | Banking App | Python       |
+| Alice      | HR System   | Java         |
+| Bob        | Banking App | Java         |
+
+---
+
+### 🎯 Problem:
+The combinations are **not truly independent**. For instance, not all combinations of `consultant-project-technology` may be valid — only specific ones are.
+
+- You **can't split this** into just `consultant-project`, `consultant-technology`, and `project-technology` and expect to reconstruct it exactly.
+- This is a **join dependency** problem → handled in **5NF**.
+
+---
+
+## ⚠️ Anomalies in 5NF Violation
+
+### 🛑 Insert Anomaly:
+- You cannot add that **Alice uses Python** on **HR System** without also inserting irrelevant or invalid combinations.
+
+### ✏️ Update Anomaly:
+- Updating a consultant’s skill or project may require modifying **many rows** with risk of inconsistency.
+
+### ❌ Delete Anomaly:
+- Removing one row might cause **loss of valid relationships** among other attributes.
+
+---
+
+## ✅ 5NF Decomposition Example
+
+### 📄 Consultant–Project Table
+
+| consultant | project     |
+|:----------:|:-----------:|
+| Alice      | Banking App |
+| Alice      | HR System   |
+| Bob        | Banking App |
+
+---
+
+### 📄 Consultant–Technology Table
+
+| consultant | technology |
+|:----------:|:----------:|
+| Alice      | Java       |
+| Alice      | Python     |
+| Bob        | Java       |
+
+---
+
+### 📄 Project–Technology Table
+
+| project     | technology |
+|:-----------:|:----------:|
+| Banking App | Java       |
+| Banking App | Python     |
+| HR System   | Java       |
+
+---
+
+### 🔁 When joined properly, they reproduce only **valid combinations** without redundancy.
+
+---
+
+## ✅ Summary of Normal Forms
+
+| Normal Form | Handles...                     |
+|-------------|--------------------------------|
+| 1NF         | Atomic values                  |
+| 2NF         | No partial dependencies        |
+| 3NF         | No transitive dependencies     |
+| BCNF        | Determinants are candidate keys |
+| 4NF         | No multivalued dependencies    |
+| **5NF**     | No join dependencies           |
+
+---
+
+## 🧩 Use Case for 5NF
+- Complex many-to-many relationships with multiple attributes.
+- Situations where combinations of three or more entities are only valid together.
