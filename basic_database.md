@@ -791,3 +791,684 @@ You pay your utility bill online. Once it says "Payment Successful," the payment
 ---
 
 ACID properties are the gold standard for database reliability. They ensure your applications remain consistent, reliable, and fault-tolerant—even under heavy load or unexpected crashes. 💡💽
+
+
+
+
+# basic sql
+
+# 📘 SQL SELECT Statement - Complete Guide
+
+The `SELECT` statement is the most commonly used command in SQL. It allows you to **retrieve data from one or more tables** in a relational database.
+
+---
+
+## 🔹 Basic Syntax
+
+```sql
+SELECT column1, column2, ...
+FROM table_name;
+```
+
+
+## 🔹 To Select All Columns
+
+To retrieve all columns from a table, use the asterisk `*`:
+
+```sql
+SELECT * FROM table_name;
+```
+
+
+## 🧾 Example
+
+Assume you have a table named `employees`:
+
+| id | name     | department | salary | hire_date  |
+|----|----------|------------|--------|------------|
+| 1  | Alice    | HR         | 50000  | 2020-01-15 |
+| 2  | Bob      | IT         | 65000  | 2019-03-10 |
+| 3  | Charlie  | IT         | 70000  | 2021-06-01 |
+| 4  | Diana    | Finance    | 48000  | 2022-08-20 |
+
+---
+
+## ✅ Select Specific Columns
+
+You can fetch only specific columns from a table:
+
+```sql
+SELECT name, salary FROM employees;
+```
+
+
+
+## ✅ Select Specific Columns
+
+You can fetch only specific columns from a table:
+
+```sql
+SELECT name, salary FROM employees;
+```
+
+## 🎯 Using WHERE Clause
+
+Filter rows based on a condition:
+
+```sql
+SELECT * FROM employees WHERE department = 'IT';
+```
+
+## 💰 WHERE with Comparison Operators
+
+You can use operators like =, >, <, >=, <=, !=:
+
+```sql
+SELECT name, salary FROM employees WHERE salary > 60000;
+```
+
+
+## 📌 DISTINCT
+
+Remove duplicates from the result:
+
+```sql
+SELECT DISTINCT department FROM employees;
+```
+
+## 🔃 ORDER BY
+
+Sort results by one or more columns:
+
+```sql
+SELECT * FROM employees ORDER BY salary DESC;
+
+```
+
+## 🎯 LIMIT
+
+Limit number of rows returned:
+
+```sql
+SELECT * FROM employees LIMIT 3;
+
+```
+
+
+## ➕ Aliases
+
+Give a temporary name to columns or tables for better readability:
+
+```sql
+SELECT name AS employee_name, salary AS income FROM employees;
+
+```
+
+## 🔎 LIKE
+
+Used for pattern matching with wildcards (%, _):
+
+```sql
+SELECT * FROM employees WHERE name LIKE 'A%';
+```
+
+## 🧮 Aggregation Functions
+
+Functions like COUNT, AVG, MAX, MIN, SUM:
+
+```sql
+SELECT COUNT(*), AVG(salary), MAX(salary), MIN(salary), SUM(salary) FROM employees;
+
+```
+
+## 📚 GROUP BY
+
+Group data for aggregate analysis:
+
+```sql
+SELECT department, COUNT(*) AS total_employees FROM employees GROUP BY department;
+
+```
+
+## 🧨 HAVING
+
+Filter groups after aggregation:
+
+```sql
+SELECT department, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department
+HAVING AVG(salary) > 50000;
+
+```
+
+## 🔗 JOIN
+
+Combine rows from multiple tables based on a related column:
+
+```sql
+SELECT employees.name, departments.location
+FROM employees
+JOIN departments ON employees.department_id = departments.id;
+
+```
+
+
+## 🚀 Real World Use Case
+
+An example combining multiple features:
+
+```sql
+SELECT department, ROUND(AVG(salary), 2) AS avg_salary
+FROM employees
+WHERE department != 'HR'
+GROUP BY department
+ORDER BY avg_salary DESC;
+
+
+```
+
+
+## 🧠 Tips
+
+- Use `LIMIT` during testing to avoid large outputs.
+- Combine `WHERE`, `ORDER BY`, `GROUP BY` for powerful queries.
+- `AS` makes results cleaner and more understandable.
+- Always format and comment complex queries for maintainability.
+- Use `EXPLAIN` to analyze query performance.
+
+---
+
+## ✅ Summary Table
+
+| Clause       | Description                              |
+|--------------|------------------------------------------|
+| `SELECT`     | Choose columns to display                |
+| `FROM`       | Specify table(s) to query from           |
+| `WHERE`      | Filter the records                       |
+| `GROUP BY`   | Group rows based on column(s)            |
+| `HAVING`     | Filter groups after aggregation          |
+| `ORDER BY`   | Sort the output                          |
+| `LIMIT`      | Restrict number of rows returned         |
+
+---
+
+
+
+
+
+# SQL `UPDATE` Statement Explained
+
+The SQL `UPDATE` statement is used to modify existing records in a table. It is one of the most commonly used Data Manipulation Language (DML) commands.
+
+---
+
+## 📌 Syntax
+
+```sql
+UPDATE table_name
+SET column1 = value1, column2 = value2, ...
+WHERE condition;
+```
+
+
+## 🧾 Example
+
+Assume you have a table named `employees`:
+
+| id | name     | department | salary | hire_date  |
+|----|----------|------------|--------|------------|
+| 1  | Alice    | HR         | 50000  | 2020-01-15 |
+| 2  | Bob      | IT         | 65000  | 2019-03-10 |
+| 3  | Charlie  | IT         | 70000  | 2021-06-01 |
+| 4  | Diana    | Finance    | 48000  | 2022-08-20 |
+
+---
+
+
+
+## 🎯 Update Single Row Example
+
+```sql
+UPDATE employees
+SET salary = 70000
+WHERE id = 2;
+
+
+
+```
+
+
+## 🔄 Update Multiple Columns
+
+```sql
+UPDATE employees
+SET name = 'Charles', salary = 65000
+WHERE id = 3;
+
+```
+
+
+## ❌ Update Without WHERE (Not Recommended)
+
+```sql
+UPDATE employees
+SET department = 'Operations';
+```
+
+## 🛠️ Use with Subqueries
+
+```sql
+UPDATE employees
+SET salary = (
+    SELECT AVG(salary)
+    FROM employees
+    WHERE department = 'IT'
+)
+WHERE department = 'HR';
+```
+
+
+
+
+
+
+# Best Practices for Using SQL `UPDATE` Statement and Summary
+
+---
+
+## 🏆 Best Practices
+
+1. **Always Use the WHERE Clause:**
+   - When updating records, always ensure that a `WHERE` clause is specified. Without it, all rows in the table will be updated.
+   - Example:
+     ```sql
+     UPDATE employees
+     SET salary = 50000;
+     ```
+     This would update the salary of every employee in the table!
+
+2. **Limit Updates to Small Batches:**
+   - If you need to update many rows, consider doing it in smaller batches to avoid performance issues and lock contention.
+   - Example:
+     ```sql
+     UPDATE employees
+     SET salary = salary * 1.05
+     WHERE department = 'IT'
+     LIMIT 100;
+     ```
+
+3. **Use Transactions:**
+   - For important updates, wrap them in a transaction to ensure atomicity. This means the update will either be fully applied or fully rolled back if something goes wrong.
+   - Example:
+     ```sql
+     BEGIN TRANSACTION;
+     
+     UPDATE employees
+     SET salary = 60000
+     WHERE id = 1;
+     
+     COMMIT;
+     ```
+
+4. **Backup Data Before Large Updates:**
+   - Before applying major changes, always make sure you have a backup of your data to prevent accidental data loss.
+
+5. **Test Before Applying:**
+   - Always test your `UPDATE` queries on a sample dataset before running them in production. This will help catch errors.
+
+---
+
+## 📚 Summary
+
+- The `UPDATE` statement in SQL is used to modify existing records in a table.
+- It typically includes:
+  - **`SET`**: Defines which columns to update and what new values to set.
+  - **`WHERE`**: Specifies which rows should be updated.
+- Always ensure the **`WHERE`** clause is used to prevent unintended updates.
+- Transactions provide a way to ensure that your updates are applied atomically.
+- It's a good practice to backup your data before performing large updates and test changes on a smaller set first.
+
+---
+
+
+# SQL INSERT Statement
+
+The `INSERT` statement in SQL is used to add new records to a table in the database. It is one of the most commonly used SQL operations, allowing data to be stored in relational databases.
+
+---
+
+## 🔹 Basic Syntax
+
+```sql
+INSERT INTO table_name (column1, column2, column3, ...)
+VALUES (value1, value2, value3, ...);
+```
+
+##  Insert a Single Row
+
+```sql
+INSERT INTO employees (id, name, department, salary)
+VALUES (1, 'John Doe', 'IT', 50000);
+```
+
+##  Insert Multiple Rows
+
+```sql
+INSERT INTO employees (id, name, department, salary)
+VALUES 
+  (2, 'Jane Smith', 'HR', 60000),
+  (3, 'Mike Johnson', 'Finance', 70000),
+  (4, 'Sara Lee', 'Marketing', 55000);
+```
+
+##  Insert Data Using Subquery
+
+```sql
+INSERT INTO new_employees (id, name, department, salary)
+SELECT id, name, department, salary
+FROM old_employees
+WHERE department = 'IT';
+
+```
+
+##   Using DEFAULT Keyword
+
+```sql
+INSERT INTO employees (id, name, department, salary)
+VALUES (6, 'Emily Davis', 'Finance', DEFAULT);
+```
+
+
+##   Insert With Auto-Increment Field
+Assuming id is auto-increment:
+```sql
+INSERT INTO employees (name, department, salary)
+VALUES ('Chris Green', 'Operations', 75000);
+```
+
+
+##   ✅ SQL Transaction Example for INSERT
+Let's say you're inserting into two related tables: employees and salaries. You want to ensure that either both inserts succeed, or neither happens.
+
+```sql
+START TRANSACTION;
+
+-- Insert into employees table
+INSERT INTO employees (employee_id, name, department)
+VALUES (101, 'Alice Johnson', 'Engineering');
+
+-- Insert into salaries table
+INSERT INTO salaries (employee_id, salary)
+VALUES (101, 85000);
+
+-- If everything is OK, commit the transaction
+COMMIT;
+
+-- If anything goes wrong (like a duplicate ID, a foreign key failure, etc.), you can roll back:
+
+-- ROLLBACK;
+
+```
+
+## 🛠 Best Practices
+
+- ✅ Ensure column values match the data types.
+- ✅ Use transactions when inserting into multiple related tables.
+- ✅ Use batch inserts for better performance.
+- ✅ Avoid inserting duplicate data using `WHERE NOT EXISTS` or constraints.
+- ✅ Sanitize input to prevent SQL injection.
+- ✅ Use parameterized queries in application code (especially with Python, Java, etc.).
+- ✅ Use indexes carefully — too many indexes can slow down inserts.
+- ✅ Handle NULLs explicitly if needed to maintain data consistency.
+
+---
+
+## 📌 Summary
+
+| Topic                        | Details                                                                 |
+|-----------------------------|-------------------------------------------------------------------------|
+| Add a single row            | Use `INSERT INTO table (...) VALUES (...)`                             |
+| Add multiple rows           | Use multiple value sets in one query                                   |
+| Insert from another table   | Use `INSERT INTO ... SELECT ... FROM`                                  |
+| Use default values          | Omit column or use `DEFAULT`                                           |
+| Handle auto-increment       | Omit the auto-increment column                                         |
+| Best performance            | Use batch insert with transactions                                     |
+| Prevent duplicates          | Use `NOT EXISTS`, `IGNORE`, or unique constraints                      |
+
+---
+
+
+
+# 🧾 SQL `DELETE` Statement — Explained with Examples
+
+The `DELETE` statement is used to **remove rows** from a table in a database.
+
+---
+
+## 📌 Basic Syntax
+
+```sql
+DELETE FROM table_name
+WHERE condition;
+```
+
+
+##   Delete a Specific Row
+Deletes the row where the employee id is 101.
+```sql
+DELETE FROM employees
+WHERE id = 101;
+
+```
+
+
+##    Delete Rows Based on a Condition
+Deletes all orders placed before January 1, 2024.
+```sql
+DELETE FROM orders
+WHERE order_date < '2024-01-01';
+```
+
+
+##   Delete All Rows (Dangerous!)
+Deletes every row in the customers table. The table structure stays, but it’s empty now.
+
+```sql
+DELETE FROM customers;
+```
+
+##    Using DELETE with Subquery
+Deletes all employees who work in the HR department.
+
+```sql
+DELETE FROM employees
+WHERE department_id IN (
+    SELECT id FROM departments WHERE name = 'HR'
+);
+```
+
+
+##    Delete with JOIN (Vendor-Specific)
+Deletes employees who belong to the Finance department.
+```sql
+DELETE employees
+FROM employees
+JOIN departments ON employees.department_id = departments.id
+WHERE departments.name = 'Finance';
+```
+
+
+
+# Database relationships
+
+
+
+# 📘 Everything About Database Relationships (With Examples)
+
+In a relational database, **relationships** define how data in one table relates to data in another. They are fundamental to database normalization, avoiding data redundancy, and ensuring data integrity.
+
+---
+
+## 🔗 Why Relationships Matter
+
+Imagine managing a university database. You wouldn’t want to store the full student info every time they enroll in a course. Instead, you'd link a **Student** table with a **Course** table through a relationship.
+
+---
+
+## 🔶 Types of Database Relationships
+
+---
+
+### 1. One-to-One (1:1)
+
+Each row in **Table A** is linked to only one row in **Table B**, and vice versa.
+
+**Use Case**: Storing user profile info separately from login credentials.
+
+#### 🧾 Example:
+
+```sql
+-- Users Table
+CREATE TABLE Users (
+  user_id INT PRIMARY KEY,
+  username VARCHAR(100)
+);
+
+-- UserProfiles Table
+CREATE TABLE UserProfiles (
+  profile_id INT PRIMARY KEY,
+  user_id INT UNIQUE,
+  bio TEXT,
+  FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+```
+
+Each user has one unique profile.
+
+
+# 🔁 One-to-Many (1:N) Relationship in Databases
+
+A **One-to-Many** relationship means that **one row in a table (parent)** can be associated with **many rows in another table (child)**, but **each child row refers to only one parent**.
+
+---
+
+## ✅ Real-World Example
+
+### Scenario: Customers and Orders
+
+- One customer can place multiple orders.
+- Each order belongs to only one customer.
+
+---
+
+## 📋 Table Design
+
+```sql
+-- customers table parent
+CREATE TABLE Customers (
+  customer_id INT PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(100)
+);
+
+
+-- orders table child
+CREATE TABLE Orders (
+  order_id INT PRIMARY KEY,
+  customer_id INT,
+  order_date DATE,
+  amount DECIMAL(10,2),
+  FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)
+);
+```
+
+The customer_id in the Orders table is a foreign key pointing to Customers.
+This enforces referential integrity.
+
+
+# 🔁 Many-to-Many (N:M) Relationship in Databases
+
+A **Many-to-Many** relationship means that **one row in a table (parent)** can be associated with **many rows in another table (child)**, and **each row in the child table can also be associated with many rows in the parent table**.
+
+---
+
+## ✅ Real-World Example
+
+### Scenario: Students and Courses
+
+- A student can enroll in multiple courses.
+- A course can have multiple students.
+
+---
+
+## 📋 Table Design
+
+In a Many-to-Many relationship, we typically need a **junction (or bridge) table** to represent the relationship between the two entities.
+
+```sql
+--Students Table (Parent)
+CREATE TABLE Students (
+  student_id INT PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(100)
+);
+
+-- Courses Table (Parent)
+CREATE TABLE Courses (
+  course_id INT PRIMARY KEY,
+  course_name VARCHAR(100)
+);
+
+-- Enrollments Table (Junction Table)
+
+CREATE TABLE Enrollments (
+  student_id INT,
+  course_id INT,
+  enrollment_date DATE,
+  PRIMARY KEY (student_id, course_id),
+  FOREIGN KEY (student_id) REFERENCES Students(student_id),
+  FOREIGN KEY (course_id) REFERENCES Courses(course_id)
+);
+```
+The Enrollments table establishes the many-to-many relationship between Students and Courses.
+
+Both student_id and course_id are foreign keys referencing the Students and Courses tables, respectively.
+
+
+# 🔁 Self-Reference Relationship in Databases
+
+A **Self-Reference Relationship** (also known as a **Recursive Relationship**) occurs when a table references itself. This means that a row in the table can be related to another row in the same table.
+
+---
+
+## ✅ Real-World Example
+
+### Scenario: Employees and Managers
+
+- An **employee** can have a **manager**.
+- A **manager** is also an **employee**, which creates a self-referencing relationship.
+
+In a company hierarchy, an employee can report to a manager, and that manager can report to someone higher up, forming a recursive relationship.
+
+---
+
+## 📋 Table Design
+
+In a self-reference relationship, we need to use a **foreign key** that points back to the same table.
+
+### Employees Table (Self-Referencing)
+
+```sql
+CREATE TABLE Employees (
+  employee_id INT PRIMARY KEY,
+  name VARCHAR(100),
+  position VARCHAR(100),
+  manager_id INT,
+  FOREIGN KEY (manager_id) REFERENCES Employees(employee_id)
+);
+
+
+manager_id is a foreign key referencing the same table (Employees) to indicate who the manager of the employee is.
+
+The relationship is self-referential because both the employee and the manager are in the same table.
