@@ -2001,3 +2001,93 @@ Use a **Self Join** when:
 - ❌ **Not Always Intuitive**: Self joins can be difficult to understand, especially when there are multiple levels of hierarchy or when they’re used for more advanced comparisons.
 
 ---
+
+
+
+# Subquery in SQL
+A subquery is simply a query nested inside another query. It’s used when we need to perform multiple operations in steps, or when filtering or selecting data based on another query’s result. A subquery is also called a nested query or inner query.
+
+Subqueries can be classified into several types. Below are the main types, along with examples:
+
+
+
+a. Scalar Subquery
+A scalar subquery returns only one row and one column. It is executed first, independently, and its result is then used by the outer query.
+
+  Example 1: One row with one column
+  Suppose we have a table called employee, and we want to retrieve all employees whose salary is higher than the average salary. In this case, we can use a scalar subquery.
+
+  SELECT employee_id, name, salary
+  FROM employee
+  WHERE salary > (
+    SELECT AVG(salary)
+    FROM employee
+  );
+
+  Example 2: One row with multiple columns
+  Suppose we have a table called employees, Find all employees who work in the same department and job role as Alice:
+
+  SELECT *
+  FROM employees
+  WHERE (department_id, job_id) = (
+    SELECT department_id, job_id
+    FROM employees
+    WHERE name = 'Alice'
+  );
+
+
+
+
+b. Multi-row Subquery
+A multi-row subquery returns multiple rows, and it can return either one column or multiple columns.
+
+  1. Multiple rows with a single column
+  Suppose we have two tables: employee and department. We want to find all departments that are used in the employee table.
+
+  SELECT department_name
+  FROM department
+  WHERE department_id IN (
+    SELECT DISTINCT department_id
+    FROM employee
+  );
+
+  2. Multiple rows with multiple columns
+  Suppose we have employees and promotions tables. Find all employees who match any department and job combination listed in the promotions table.
+
+  SELECT employee_id, name, department_id, job_id
+  FROM employees
+  WHERE (department_id, job_id) IN (
+    SELECT department_id, job_id
+    FROM promotions
+  );
+
+
+
+c. Correlated Subquery
+A correlated subquery depends on values from the outer query. It cannot be executed independently because it is evaluated once for every row of the outer query.
+
+Example:
+Suppose we have an employees table, and we want to find employees whose salary is higher than the average salary of their own department.
+
+SELECT name
+FROM employees e1
+WHERE salary > (
+  SELECT AVG(salary)
+  FROM employees e2
+  WHERE e1.department_id = e2.department_id
+);
+In this example, the subquery is run once for each row in the outer query.
+
+
+Where Can We Use Subqueries?
+  Subqueries can be used in:
+
+  SELECT clause
+
+  FROM clause
+
+  WHERE clause
+
+  HAVING clause
+
+  Even inside INSERT, UPDATE, and DELETE statements
