@@ -2091,3 +2091,79 @@ Where Can We Use Subqueries?
   HAVING clause
 
   Even inside INSERT, UPDATE, and DELETE statements
+
+
+
+  # CTE (Common Table Expression)
+
+  A CTE is defined at the beginning of the query. It temporarily holds a result set. You can think of it as a variable that holds a value, but it only exists for the duration of the query. A CTE is defined using the WITH keyword.
+
+  # Why use CTE?
+    1. It makes queries readable and maintainable.
+    2. CTE helps break down complex queries step by step.
+    3. It allows reusing queries.
+    4. It increases query performance.
+    5. CTE makes it easier to manage complex nested queries or subqueries.
+
+
+Example of CTE:
+  1. Simple CTE: Suppose we have a table employees and you need to find all employees whose salary is greater than the average salary.
+
+  ```sql
+    with avg_salary as (
+      select avg(salary) as avg_sal
+      from employees
+    )
+
+    select employee_id, name
+    from employees
+    cross join avg_salary
+    where employees.salary > avg_salary.avg_sal;
+
+  ```
+
+
+2. Chained CTE: We can also use multiple CTEs or chained CTEs. A chained CTE means you are defining multiple CTEs in a row, where each one can build on the previous.
+
+Suppose we have tables employees and department. Our goal is to find all employees who work in departments where the average salary exceeds 60,000.
+
+  ```sql
+  WITH avg_salaries AS (
+  SELECT department_id, AVG(salary) AS avg_salary
+  FROM employee
+  GROUP BY department_id
+  ),
+
+  high_avg_departments AS (
+    SELECT department_id
+    FROM avg_salaries
+    WHERE avg_salary > 60000
+  )
+
+  SELECT e.employee_id, e.name, e.salary, d.department_name
+  FROM employee e
+  JOIN high_avg_departments h ON e.department_id = h.department_id
+  JOIN department d ON e.department_id = d.department_id;
+```
+
+3. Recursive CTEs: A recursive CTE is a way to query hierarchical or tree-structured data, like employees reporting to managers, categories with subcategories, or folder structures.
+
+Suppose we have a table employees. Retrieve the full employee hierarchy starting from top-level managers, including each employee’s level in the organizational structure.
+
+```sql
+WITH RECURSIVE emp_hierarchy AS (
+  SELECT employee_id, name, manager_id, 1 AS level
+  FROM employee
+  WHERE manager_id IS NULL
+
+  UNION ALL
+
+  SELECT e.employee_id, e.name, e.manager_id, eh.level + 1
+  FROM employee e
+  JOIN emp_hierarchy eh ON e.manager_id = eh.employee_id
+)
+
+SELECT *
+FROM emp_hierarchy;
+
+```
