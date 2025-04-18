@@ -2152,7 +2152,7 @@ Suppose we have a table employees. Retrieve the full employee hierarchy starting
 
 ```sql
 WITH RECURSIVE emp_hierarchy AS (
-  SELECT employee_id, name, manager_id, 1 AS level
+  SELECT employee_id, name, manager_id, 1 AS level 
   FROM employee
   WHERE manager_id IS NULL
 
@@ -2167,3 +2167,94 @@ SELECT *
 FROM emp_hierarchy;
 
 ```
+
+# Window Functions in SQL
+
+Window functions perform calculations across a set of rows related to the current row.
+Unlike aggregate functions (SUM(), AVG()), which return a single value for a group of rows, window functions return a value for every row while still allowing group-based calculations.
+
+They’re incredibly useful for advanced reporting, analytics, and calculations within a partitioned set of data.
+
+To use a window function:
+
+Apply the function (ROW_NUMBER(), RANK(), SUM())
+
+Use the OVER() clause to define the window
+
+Inside OVER() you can use:
+
+  PARTITION BY → group data into windows
+
+  ORDER BY → order rows within the window
+
+  Frame clause → optional, for row ranges
+
+List of window functions:
+  1. rank() function: Assigns a rank to each row within a partition, gaps exist between ranks when values tie. Do not take any arguments. 
+    suppose we have a table employee. now find employee rank based on salary in each department.
+
+    ```sql
+    select employee_id, department, salary
+    rank() over(partition by department order by salary desc) as dept_rank
+    from employees;
+    ```
+
+  2. dense_rank() function: Assigns a rank to each row within a partition but no gaps in rank when values tie.Do not take any arguments.
+    suppose we have a table employee. now find employee rank based on salary in each department. and rank must be without skiping numbers.
+
+    ```sql
+    select employee_id, department, salary
+    dense_rank() over(partition by department order by salary desc) as dept_dense_rank
+    from employees;
+    ```
+
+  3. row_number() function: Assigns a unique, sequential number to each row within the partition.Do not take any arguments.
+    suppose we have a table sales. now find most recent salre for each customer.
+
+    ```sql
+    select *
+    from (
+      select customer_id, sale_date, amount,
+      row_number() over(partition by customer_id order by sale_date desc) as rn
+      from sales
+    ) t
+    where rn = 1;
+    ```
+
+
+  4. sum(), max(), min(), avg() functions: Perform aggregate calculations within the window, but keep individual row details. Only accepts one column as an argument.
+    suppose we have a table employees. show each employees salary along with the total_salary of their department.
+
+    ```sql
+    SELECT 
+    employee_id, department, salary,
+    SUM(salary) OVER (PARTITION BY department) AS dept_total_salary
+    FROM employees;
+    ```
+  5. count() function: Count the number of rows in each partition. Only accepts one column as an argument.
+    suppose we have a table employees. Show how many employees are in each department, next to each employee.
+    ```sql
+      SELECT 
+      employee_id, department,
+      COUNT(*) OVER (PARTITION BY department) AS employee_count
+      FROM employees;
+    ```
+  6. lag() function: Access data from the previous row in the partition. Takes up to three arguments: LAG(column, offset, default_value)
+    suppose we have a table product_prices. Compare a product’s current price with its previous price.
+
+    ```sql
+    SELECT 
+      product_id, price_date, price,
+      LAG(price, 1, 0) OVER (PARTITION BY product_id ORDER BY price_date) AS previous_price
+    FROM product_prices;
+    ```
+  7. lead() function: Access data from the next row in the partition. Also takes up to three arguments:LEAD(column, offset, default_value)
+    suppose we have a table product_prices. see what a product's price will be in the next month.
+
+    ```sql
+    SELECT 
+      product_id, price_date, price,
+      LEAD(price, 1, NULL) OVER (PARTITION BY product_id ORDER BY price_date) AS next_price
+    FROM product_prices;
+
+    ```
