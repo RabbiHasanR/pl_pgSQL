@@ -2258,3 +2258,68 @@ List of window functions:
     FROM product_prices;
 
     ```
+
+
+
+# Recursive SQL
+A recursive query is a query that refers to itself. This means the query executes repeatedly until a certain condition is met. We can achieve a recursive query using CTEs (Common Table Expressions).
+
+## When writing a recursive query, we must include:
+  1. a base case
+  2. a recursive case
+  3. a termination condition to avoid infinite recursion.
+
+## Recursive queries are generally used for hierarchical or tree-like data structures, such as:
+  1. Employees reporting to managers
+  2. Categories with subcategories
+  3. Folders with nested files
+  4. Family trees, dependencies, etc.
+
+## Pros of Recursive Queries:
+  1. Readable: Easier to understand and maintain than complex joins or loops
+  2. Elegant: Ideal for working with hierarchical/tree-structured data (e.g., org charts, categories)
+  3. Declarative: Expresses logic clearly in SQL, without needing procedural code
+  4. Flexible: Can handle unknown or dynamic depth in hierarchy
+
+## Cons of Recursive Queries:
+  1. Deep recursion: Too many levels can hurt performance or hit recursion limits
+  2. Missing indexes: Without indexes on join keys (like parent_id), queries slow down
+  3. Large datasets: Repeated scans can lead to high CPU and memory usage
+  4. Unbounded recursion: Risk of infinite loops if cycles exist and depth limits aren't set
+  5. Materialization cost: Intermediate results may consume memory/temp space
+
+
+    example of recusive query:
+
+    1. Show integers from 1 to 10 in a num column without using built-in functions:
+
+    ```sql
+    with recursive nums as (
+      select 1 as num
+      union
+      select num + 1 from nums where num < 10
+    )
+
+    select num
+    from nums;
+    ```
+
+    2. Employee hierarchy: Get manager-to-employee structure including level (depth):
+    
+    ```sql
+    with recursive emp_hiararchy as (
+      select employee_id, name, manager_id, 1 as lavel
+      from employees
+      where manager_id is null
+
+      union all
+
+      select  employee_id, name, manager_id, lavel + 1
+      from employees e
+      join emp_hiararchy eh on e.manager_id = eh.employee_id 
+    )
+
+    select * 
+    from emp_hiararchy
+    order by level;
+    ```
