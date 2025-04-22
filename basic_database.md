@@ -2305,7 +2305,7 @@ A recursive query is a query that refers to itself. This means the query execute
     ```
 
     2. Employee hierarchy: Get manager-to-employee structure including level (depth):
-    
+
     ```sql
     with recursive emp_hiararchy as (
       select employee_id, name, manager_id, 1 as lavel
@@ -2323,3 +2323,324 @@ A recursive query is a query that refers to itself. This means the query execute
     from emp_hiararchy
     order by level;
     ```
+
+
+
+# Understanding Views vs Materialized Views in SQL
+
+When working with repetitive queries or performance-heavy reporting, two powerful tools can help: Views and Materialized Views.
+
+# View
+
+A View is a virtual table based on a SQL query. It doesn't store data, just the logic. Every time you query it, it fetches live data from the underlying tables.
+
+# Key points:
+  1. Does not store data
+  2. Always fetches live data from underlying tables
+  3. Lightweight and up-to-date
+  4. Good for encapsulating logic, simplifying complex queries
+
+# When to use view
+  1. Data change frequently
+  2. You want always updated result
+  3. You don't need speed optimization
+
+# Example
+
+```sql
+-- create view
+CREATE VIEW monthly_sales AS
+SELECT 
+  DATE_TRUNC('month', sale_date) AS month,
+  SUM(amount) AS total
+FROM sales
+GROUP BY DATE_TRUNC('month', sale_date);
+
+-- run view
+SELECT * FROM monthly_sales;
+```
+
+# Materialized view
+A materialized view is like a view but its store result of the query physically in the database
+
+# Key points
+  1. stores data like a real table
+  2. Must be refreshed get updated data
+  3. Faster for large or complex queries
+  4. good for performance when data doesn't change often
+
+# When to use materialized view
+  1. Data changes less often
+  2. You want fast reads (e.g., dashboards, reports)
+  3. You're okay with refreshing manually or on schedule
+
+# Example
+
+```sql
+-- create materialized view
+CREATE MATERIALIZED VIEW monthly_sales_mv AS
+SELECT 
+  DATE_TRUNC('month', sale_date) AS month,
+  SUM(amount) AS total
+FROM sales
+GROUP BY DATE_TRUNC('month', sale_date);
+
+-- run materialized view
+SELECT * FROM monthly_sales;
+
+-- refresh materialized view
+
+REFRESH MATERIALIZED VIEW monthly_sales_mv;
+```
+
+
+
+# Multiple Join
+Every backend engineers or database engineers familer with joins. Joins has many types like inner join, left join, right join, full join, cross join etc. basicaly we use joins when we need to get data from multiple tables as a one result set used only one query. So when we joins two table its basicaly easy for us to relate how two table joins work. for using joins with two talbe we need to primay and foreign key relation with two table..also we can join using any other column value which value is unique and this calumn in two tables. but when we need to use multiple joins in a single query then its hard  to understand how its work. someone can not agree with me. but for me first time when i see multi joins query then i can not figure out how its working. then i deep drive into it and figure out how its working. Lets understand multi joins query with examples.
+
+Suppose we have three tables customers, orders and order_items. with this three table customers and orders has one to many relation. Also orders and order_items has one to many relation. Below show these tables:
+
+1. customers
+   Every customer can have multiple orders
+
+| customer_id | name        |
+|:-----------:|:------------|
+| 1           | Alice       | 
+| 2           | Bob         | 
+| 3           | David       |
+
+
+2. orders
+  Every order can  have multiple order_items
+
+| order_id    | customer_id | order_date |
+|:-----------:|:------------|:----------:|
+| 101         | 1           | 2024-01-01 |
+| 102         | 2           | 2024-01-02 |
+| 103         | 3           | 2024-01-01 |
+| 104         | 1           | 2024-01-03 |
+| 105         | 3           | 2024-01-02 |
+
+
+3. order_items
+
+| item_id | order_id | product      | quantity |
+|:-------:|:---------|:------------:|:--------:|
+| 1       | 101      | Pen          | 2        |
+| 2       | 101      | Notebook     | 1        |
+| 3       | 102      | Pencil       | 4        |
+| 4       | 103      | Eraser       | 3        |
+| 5       | 103      | Sharpner     | 1        |
+| 6       | 104      | Pen          | 4        |
+| 7       | 104      | Pencil       | 2        |
+| 8       | 105      | Pen          | 4        |
+| 9       | 105      | Pencil       | 2        |
+
+
+# Problem statement:
+  Show customer names, their order dates, and each product they ordered with quantity.
+
+  So find these customer with their order details how can we query. with problem statement we need customer name which is in customer table, order date which is in orders table and each product they order with quantity which is in order_items table.
+
+# solution
+
+  So frst we need to check in these table which column or value is same. since customers and orders has one to many relation so customers table primary key customer_id and orders table foreign key customer_id column and value is same. so we need these customer who orders. so for this we can use inner join. inner join return result set where two table customer id match only these rows. lets write query with these two table find customers names amd orders dates.
+
+  ```sql
+  select c.name, o.order_id, o.order_date
+  from customers as c
+  inner join orders as o on c.customer_id = o.customer_id;
+  ```
+
+# result
+  This query joins the customers and orders tables on customer_id, returning each customers name alogin with their order_id and order_date.
+
+  | name  | order_id | order_date |
+  |:------|:---------|:-----------|
+  | Alice | 101      | 2024-01-01 |
+  | Bob   | 102      | 2024-01-02 |
+  | David | 103      | 2024-01-01 |
+  | Alice | 104      | 2024-01-03 |
+  | David | 105      | 2024-01-02 |
+
+now our main goal is Show customer names, their order dates, and each product they ordered with quantity. in result set we have customer name, order_id and order_date and in order_items table we have product name and product quantity. so if we inner join result table and order_items table based on order_id then we found each customer each orders product quantity. so for example now join result with order_items table
+
+```sql
+select r.name, r.order_id, r.order_date, oi.product, oi.quantity
+from result as r
+inner join order_items as oi on r.order_id = oi.order_iid
+```
+
+# result 
+ This query joins the result and order_items tables on order_id, returning each customers name alogin with their order_id and order_date, product and quantity.
+
+| name  | order_id | order_date | product   | quantity |
+|:------|:---------|:-----------|:----------|:---------|
+| Alice | 101      | 2024-01-01 | Pen       | 2        |
+| Alice | 101      | 2024-01-01 | Notebook  | 1        |
+| Bob   | 102      | 2024-01-02 | Pencil    | 4        |
+| David | 103      | 2024-01-01 | Eraser    | 3        |
+| David | 103      | 2024-01-01 | Sharpner  | 1        |
+| Alice | 104      | 2024-01-03 | Pen       | 4        |
+| Alice | 104      | 2024-01-03 | Pencil    | 2        |
+| David | 105      | 2024-01-02 | Pen       | 4        |
+| David | 105      | 2024-01-02 | Pencil    | 2        |
+
+
+so using multi join we can achive this result with single query. first join customers and orders on customer_id then join result set with order_items based on order_id
+
+```sql
+select c.name, o.order_id, o.order_date, oi.product, oi.quantity
+from customers as c
+inner join orders as o on c.customer_id = o.customer_id
+inner join order_items as oi on o.order_id = oi.order_id
+```
+
+
+
+# implicit join
+Sometimes we use multiple table with from cluse like from a_table, b_table without using any join. so when we use multiple table like this with from clause then its call implicit join. if we don't use any where condition then its implicitly use cross join or cartisian join. in a cross join a_table every row combined with b_table every row. if a_table has 6 row and b_table has 6 row then output table have 36 row. but if we use where condition then its working as a inner join. so then only mathing condition row is fetch a output table.
+
+in implicit join we can use more then two tables. from a_table, b_table, c_table. then how cross join work. first a_table every row combined with b_table every row. then each of those result is combined with every row from c_table. if more then three table then its work like this.
+
+
+lets show a example for better understanding. 
+
+✅ Problem Statement
+You are given an Activity table that tracks machine processing events.
+
+Table: Activity
+
+| id | machine_id | process_id | activity_type | timestamp           |
+|----|------------|------------|----------------|---------------------|
+| 1  | M1         | P1         | start          | 2025-04-22 10:00:00 |
+| 2  | M1         | P1         | end            | 2025-04-22 10:30:00 |
+| 3  | M1         | P2         | start          | 2025-04-22 11:00:00 |
+| 4  | M1         | P2         | end            | 2025-04-22 11:20:00 |
+| 5  | M2         | P1         | start          | 2025-04-22 09:00:00 |
+| 6  | M2         | P1         | end            | 2025-04-22 09:45:00 |
+
+
+Each process will have:
+
+  1. One start row
+  2. One end row
+  3. For the same machine and same process_id
+
+Goal
+  Find the average processing time (in seconds) for each machine, where:
+    1. Processing time = end timestamp − start timestamp
+    2. Round the average time to 3 decimal places
+
+
+we can solve this problem many way in sql. but for understanding implicit join we use it for solve this problem.
+
+Query:
+
+ ```sql
+ SELECT a.machine_id,
+       ROUND(AVG(EXTRACT(EPOCH FROM (b.timestamp - a.timestamp))), 3) AS processing_time
+  FROM Activity AS a, Activity AS b
+  WHERE a.machine_id = b.machine_id
+    AND a.process_id = b.process_id
+    AND a.activity_type = 'start'
+    AND b.activity_type = 'end'
+  GROUP BY a.machine_id;
+
+ ```
+
+ with this query we can get our desire output. so lets breakdown this query for remove all confusion:
+
+
+Step 1: FROM Activity AS a, Activity AS b
+  This does a Cartesian product (every row of a paired with every row of b), creating 6 × 6 = 36 rows.
+
+  We’ll just show a small portion of this huge table:
+
+  | a.id | a.machine_id | a.process_id | a.activity_type | a.timestamp           | b.id | b.machine_id | b.process_id | b.activity_type | b.timestamp           |
+|------|--------------|--------------|------------------|------------------------|------|--------------|--------------|------------------|------------------------|
+| 1    | M1           | P1           | start            | 2025-04-22 10:00:00    | 1    | M1           | P1           | start            | 2025-04-22 10:00:00    |
+| 1    | M1           | P1           | start            | 2025-04-22 10:00:00    | 2    | M1           | P1           | end              | 2025-04-22 10:30:00    |
+| 1    | M1           | P1           | start            | 2025-04-22 10:00:00    | 3    | M1           | P2           | start            | 2025-04-22 11:00:00    |
+| 1    | M1           | P1           | start            | 2025-04-22 10:00:00    | 4    | M1           | P2           | end              | 2025-04-22 11:20:00    |
+| 1    | M1           | P1           | start            | 2025-04-22 10:00:00    | 5    | M2           | P1           | start            | 2025-04-22 09:00:00    |
+| ...  | ...          | ...          | ...              | ...                    | ...  | ...          | ...          | ...              | ...                   |
+
+  You can imagine all 36 combinations here.
+
+Step 2: WHERE a.machine_id = b.machine_id
+Now we only keep rows where both rows are from the same machine:
+
+| a.id | a.machine_id | a.process_id | a.activity_type | a.timestamp          | b.id | b.machine_id | b.process_id | b.activity_type | b.timestamp          |
+|------|--------------|--------------|-----------------|----------------------|------|--------------|--------------|------------------|----------------------|
+| 1    | M1           | P1           | start           | 2025-04-22 10:00:00  | 1    | M1           | P1           | start            | 2025-04-22 10:00:00  |
+| 1    | M1           | P1           | start           | 2025-04-22 10:00:00  | 2    | M1           | P1           | end              | 2025-04-22 10:30:00  |
+| 1    | M1           | P1           | start           | 2025-04-22 10:00:00  | 3    | M1           | P2           | start            | 2025-04-22 11:00:00  |
+| 1    | M1           | P1           | start           | 2025-04-22 10:00:00  | 4    | M1           | P2           | end              | 2025-04-22 11:20:00  |
+| 2    | M1           | P1           | end             | 2025-04-22 10:30:00  | 1    | M1           | P1           | start            | 2025-04-22 10:00:00  |
+| 2    | M1           | P1           | end             | 2025-04-22 10:30:00  | 2    | M1           | P1           | end              | 2025-04-22 10:30:00  |
+| 3    | M1           | P2           | start           | 2025-04-22 11:00:00  | 3    | M1           | P2           | start            | 2025-04-22 11:00:00  |
+| 3    | M1           | P2           | start           | 2025-04-22 11:00:00  | 4    | M1           | P2           | end              | 2025-04-22 11:20:00  |
+| 4    | M1           | P2           | end             | 2025-04-22 11:20:00  | 3    | M1           | P2           | start            | 2025-04-22 11:00:00  |
+| 5    | M2           | P1           | start           | 2025-04-22 09:00:00  | 5    | M2           | P1           | start            | 2025-04-22 09:00:00  |
+| 5    | M2           | P1           | start           | 2025-04-22 09:00:00  | 6    | M2           | P1           | end              | 2025-04-22 09:45:00  |
+| 6    | M2           | P1           | end             | 2025-04-22 09:45:00  | 5    | M2           | P1           | start            | 2025-04-22 09:00:00  |
+| 6    | M2           | P1           | end             | 2025-04-22 09:45:00  | 6    | M2           | P1           | end              | 2025-04-22 09:45:00  |
+
+
+Step 3: AND a.process_id = b.process_id
+Now we only keep rows where the process_id also matches:
+
+| a.id | a.machine_id | a.process_id | a.activity_type | a.timestamp | b.id | b.machine_id | b.process_id | b.activity_type | b.timestamp |
+|------|--------------|--------------|-----------------|-------------|------|--------------|--------------|-----------------|-------------|
+| 1    | M1           | P1           | start           | 10:00       | 1    | M1           | P1           | start           | 10:00       |
+| 1    | M1           | P1           | start           | 10:00       | 2    | M1           | P1           | end             | 10:30       |
+| 3    | M1           | P2           | start           | 11:00       | 4    | M1           | P2           | end             | 11:20       |
+| 5    | M2           | P1           | start           | 09:00       | 6    | M2           | P1           | end             | 09:45       |
+
+
+Step 5: AND a.activity_type = 'start' AND b.activity_type = 'end'
+Now we only keep rows where:
+
+  . a is a "start"
+
+  . b is an "end"
+
+
+| a.id | a.machine_id | a.process_id | a.activity_type | a.timestamp | b.id | b.machine_id | b.process_id | b.activity_type | b.timestamp |
+|------|--------------|--------------|-----------------|-------------|------|--------------|--------------|-----------------|-------------|
+| 1    | M1           | P1           | start           | 10:00       | 2    | M1           | P1           | end             | 10:30       |
+| 3    | M1           | P2           | start           | 11:00       | 4    | M1           | P2           | end             | 11:20       |
+| 5    | M2           | P1           | start           | 09:00       | 6    | M2           | P1           | end             | 09:45       |
+
+
+
+✅ Final Result After GROUP BY + SELECT
+From this filtered result, we calculate the time difference and average per machine.
+
+| machine_id | processing_time |
+|------------|-----------------|
+| M1         | 25.000          |
+| M2         | 45.000          |
+
+
+
+with avobe visualization i try to visualize how eactually iplicit join work.
+
+Pros of Implicit Joins:
+  1. Simplicity: Easier for small, straightforward queries.
+  2. Concise: Fewer keywords, making the query shorter.
+
+Cons of Implicit Joins:
+  1. Less Readable: Harder to understand in complex queries.
+  2. Risk of Errors: Can lead to Cartesian products if conditions are missing.
+  3. Limited Flexibility: Lacks control over different join types.
+
+
+Implicit joins are typically used in the following situations:
+
+  1. Simple Queries: When you're working with small, straightforward queries involving only two tables and basic conditions.
+  2. Legacy Code: If you're maintaining or working with older codebases that already use implicit joins.
+  3. Quick Prototyping: For fast development or quick queries where clarity and readability aren't critical.
+
+However, it's generally better to use explicit joins for most modern SQL queries, as they are more readable and flexible.
