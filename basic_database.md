@@ -2644,3 +2644,78 @@ Implicit joins are typically used in the following situations:
   3. Quick Prototyping: For fast development or quick queries where clarity and readability aren't critical.
 
 However, it's generally better to use explicit joins for most modern SQL queries, as they are more readable and flexible.
+
+
+
+# How PostgreSQL Indexes Work and optimize performance
+
+# introduction
+as a backend dev our everyday life we use db and fetch data from db using query. when we deal with small amount of data then its not important to consider about performance. generally our query is fast for small amount data by default. but when we need featch data from like 100 milion rows table then only default way its not best for our query performance. its can cause bad impact on out application and overoll user sataticfaction. so for this query performance need. many software like ecommerce, payment_systems, gaming, transportation etc. has million of users and the fetch data from db per seccond .. so if query performance is slow then it affect on overoll software performance. so for backend dev it's important to know how can increase query performance. for increase query performance indexing is most important technique. so in this article i try to explaing what is indexing and how does it work under the hood in postgresql.
+
+# what is indexing?
+  indexing is a technique to quickly fetch or felter data from table. indexing speed up query performance. basically indexing is a data structure how can we structure index data and which indexing technique we use for our specific scenario. Much like an index in a book, a database index allows a system to find data without needing to search every row in a database table every time a database table is accessed. Indexes can be created using one or more columns, providing the basis for both rapid random lookups and efficient access of ordered records.
+
+# types of indexings?
+  in postgresql db has different types of indexing which is best for different sceinario. types of indexing  in postgresql:
+
+  1. b-tree: b-tree is best for equal comparisons(=) , range queries(<,>,between) and order by queries. b-tree is most commonly used index. in postgresql for primary key and unique constratints b-tree create automatically
+  2. hash: hash index is best for equal comparisons(=) when you don't need sorting or range queries. can not be used for range queries and rarely better then b-tree except in very high collision hash scenarios
+  3. gin: best for full-text search, array columns, jsonb fields. Slower to write, fast to query. GIN = best for multi-key matching
+  4. gist: best for Geospatial data (PostGIS), Custom data types (like boxes, ranges), Nearest-neighbor searches. Supports many extensions (e.g., earthdistance, Flexible, but slower than B-tree for basic operationscube)
+  5. brin: best for very large tables, Columns where values are naturally ordered (e.g., timestamps, IDs). Much smaller than B-tree, Ideal for append-only time-series data, Low maintenance
+  6. sp-gist: best for Hierarchical or non-balanced trees, Quadtrees, tries, IP address lookups. Specialized use cases.Efficient for spatial or partitioned data structures
+
+
+for understanding how index work in postgresql now we use deafult index b-tree in this article.
+
+# how do postgresql store table data?
+  Postgres is a Relational Database Management System(RDBMS) built on top of two basic principles
+
+  Data is stored as Rows inside Tables
+  Internally data is held in Disk or physical storage(SDD/HDD) as blocks and fetched to RAM when processing.
+
+  Postgres stores the actual data(rows of tables) in heap files. Typically it's fixed to 1GB size. These files are subdivided into blocks of 8Kb. This page/ block is the basic unit of storage for Postgres. Whenever a row inside this has to be read, It will fetch the full block. So, the block size is chosen optimally to fit into the RAM page. New blocks get appended to the heap files when existing blocks are full.
+
+  so now lets breakdown what is disk, files, pages or blocks and heap.
+
+  1. Disk:  PostgreSQL stores all its data on disk means physical storage (SDD/HDD) (unless using in-memory extensions). This ensures data persists after restarts. Each database resides in a data directory (e.g., /var/lib/pgsql/data/base/).
+
+  2. files: Each table or index in PostgreSQL is stored in one or more files. These files live inside subdirectories like base/, organized by OID (Object ID) of the database and table. each table is a binary file.
+
+  ```lua
+  base/
+  16384/      <-- a specific database
+    2619      <-- a specific table
+  ```
+  If a table grows large, PostgreSQL splits it into multiple files with suffixes like .1, .2, etc. (each up to 1GB on most platforms).
+
+  3. Pages (Blocks): ostgreSQL breaks files into pages (also called blocks) of fixed size — 8KB by default. Each page stores multiple rows (tuples) of the table. Every page has metadata and a slot area for row pointers.
+
+  4. Heap: PostgreSQL uses a heap storage structure for stores all pages for a table. A heap file is an unordered collection of rows. No clustering or sorting by default. Each row (tuple) is placed in the next available spot — not necessarily sequential.
+
+  ✅ Here's how storage works:
+    1. Rows are stored in pages (also called blocks).
+        a. Each page is typically 8 KB in size.
+        b. A page can hold multiple rows, depending on their size.
+    2. The table itself is stored as a heap of pages:
+      a. The pages are not ordered by any column.
+      b. PostgreSQL just appends new rows to the first page with enough free space.
+      c. There's no built-in ordering — it's an unordered heap table.
+    3. When a row is written, it is placed into one of the pages using free space map (FSM) to find a page with room.
+    4. Each row (tuple) has metadata, like:
+      a. xmin, xmax: transaction visibility
+      b. ctid: tuple ID (includes (page_id, offset))
+
+  rows are stored in pages, and the collection of those pages is called a "heap" (not the rows within a page).
+
+  blog link about storage; https://www.linkedin.com/pulse/postgres-physical-storage-tarun-annapareddy/
+
+
+
+# file, pages
+
+# heap
+
+# cluster and non clustered
+
+# btree
