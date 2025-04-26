@@ -2653,17 +2653,68 @@ However, it's generally better to use explicit joins for most modern SQL queries
 as a backend dev our everyday life we use db and fetch data from db using query. when we deal with small amount of data then its not important to consider about performance. generally our query is fast for small amount data by default. but when we need featch data from like 100 milion rows table then only default way its not best for our query performance. its can cause bad impact on out application and overoll user sataticfaction. so for this query performance need. many software like ecommerce, payment_systems, gaming, transportation etc. has million of users and the fetch data from db per seccond .. so if query performance is slow then it affect on overoll software performance. so for backend dev it's important to know how can increase query performance. for increase query performance indexing is most important technique. so in this article i try to explaing what is indexing and how does it work under the hood in postgresql.
 
 # what is indexing?
-  indexing is a technique to quickly fetch or felter data from table. indexing speed up query performance. basically indexing is a data structure how can we structure index data and which indexing technique we use for our specific scenario. Much like an index in a book, a database index allows a system to find data without needing to search every row in a database table every time a database table is accessed. Indexes can be created using one or more columns, providing the basis for both rapid random lookups and efficient access of ordered records.
+  indexing is a technique to quickly fetch or felter data from table. indexing speed up query performance. basically indexing is a data structure how can we structure index data and which indexing technique we use for our specific scenario. Much like an index in a book, a database index allows a system to find data without needing to search every row in a database table every time a database table is accessed. Indexes can be created using one or more columns. An index stores a subset of the table’s data (e.g., column values) in a way that optimizes search operations, such as SELECT, WHERE, JOIN, or ORDER BY. However, indexes come with trade-offs, as they increase storage and can slow down write operations (INSERT, UPDATE, DELETE).
 
-# types of indexings?
+# types of indexings postgresql?
   in postgresql db has different types of indexing which is best for different sceinario. types of indexing  in postgresql:
 
-  1. b-tree: b-tree is best for equal comparisons(=) , range queries(<,>,between) and order by queries. b-tree is most commonly used index. in postgresql for primary key and unique constratints b-tree create automatically
-  2. hash: hash index is best for equal comparisons(=) when you don't need sorting or range queries. can not be used for range queries and rarely better then b-tree except in very high collision hash scenarios
-  3. gin: best for full-text search, array columns, jsonb fields. Slower to write, fast to query. GIN = best for multi-key matching
-  4. gist: best for Geospatial data (PostGIS), Custom data types (like boxes, ranges), Nearest-neighbor searches. Supports many extensions (e.g., earthdistance, Flexible, but slower than B-tree for basic operationscube)
-  5. brin: best for very large tables, Columns where values are naturally ordered (e.g., timestamps, IDs). Much smaller than B-tree, Ideal for append-only time-series data, Low maintenance
-  6. sp-gist: best for Hierarchical or non-balanced trees, Quadtrees, tries, IP address lookups. Specialized use cases.Efficient for spatial or partitioned data structures
+  1. b-tree: b-tree is best for equal comparisons(=) , range queries(<,>,between) and order by queries. b-tree is most commonly used index. in postgresql for primary key and unique constratints b-tree create automatically. example: A customer management system where you frequently query customers by email (equality) or created_at (range).
+  ```sql
+  -- exact equal 
+  create index idx_customer_email on customers (email);
+  select * from customers where email = 'jhon@doe@example.com'
+
+  -- range queries
+  create index idx_customer_created on customers (created_at);
+  select * from customers where created_at between '2023-01-01' and '2023-12-31';
+  ```
+
+
+  2. hash: hash index is best for equal comparisons(=) when you don't need sorting or range queries. can not be used for range queries and rarely better then b-tree except in very high collision hash scenarios. example: A lookup table for product SKUs in an e-commerce platform where only exact matches are needed.
+
+  ```sql
+  create index idx_product_sku_hash on products using hash (sku);
+  select * from products where sku = 'abc123;
+  ```
+
+
+  3. gin: best for full-text search, array columns, jsonb fields. Slower to write, fast to query. GIN = best for multi-key matching. exmaple: A document management system storing JSONB metadata or full-text search for articles.
+
+  ```sql
+  -- search using jsonb key value
+  create index idx_document_metadata on documents using gin (metadata jsonb_path_ops);
+  select * from documents where metadata @> '{"category": "finance"}';
+
+  -- search from full text search
+  create index idx_article_search on articles using gin (to_tsvector('english', content));
+  select * from articles where to_tsvector('english', content) @@ to_tsquery('database & performance');
+
+  ```
+
+
+  4. gist: best for Geospatial data (PostGIS), Custom data types (like boxes, ranges), Nearest-neighbor searches. Supports many extensions (e.g., earthdistance, Flexible, but slower than B-tree for basic operationscube). example: A ride-sharing app that needs to find drivers within a specific geographic radius.
+  ```sql
+  create index idx_driver_location on drivers using gist (location);
+  select * from drivers where location && ST_MakeEnvelope(-122, 37, -121, 38, 4326);
+  ```
+  5. sp-gist: best for Hierarchical or non-balanced trees, Quadtrees, tries, IP address lookups. Specialized use cases.Efficient for spatial or partitioned data structures. example: A network monitoring system storing IP addresses for efficient range-based lookups.
+  ```sql
+  create index idx_ip_range on network_logs using spgist (ip_address);
+  select * from network_logs where ip_address << '192.168.0.0/16';
+  ```
+
+  6. brin: best for very large tables, Columns where values are naturally ordered (e.g., timestamps, IDs). Much smaller than B-tree, Ideal for append-only time-series data, Low maintenance. example: A time-series database for IoT sensor data, where records are appended in chronological order.
+  ```sql
+  create index idx_sensor_timestamp on sensor_data using brin (timestamp);
+  select * from sensor_data where timestamp >= '2025-01-01' and timestamp < '2025-02-01';
+  ```
+
+  General Considerations for Choosing an Index
+  1. Query Patterns: Analyze your application’s queries (EXPLAIN ANALYZE) to identify bottlenecks and choose the index type that matches the operators used (e.g., =, <, &&, @>).
+  2. Data Characteristics: Consider data size, cardinality, and distribution. For example, B-Tree is great for high-cardinality columns, while BRIN suits low-cardinality, ordered data.
+  3. Write vs. Read Trade-Off: Indexes improve read performance but slow down writes. For write-heavy workloads, minimize the number of indexes or use BRIN for low overhead.
+  4. Storage Constraints: GIN and GiST indexes can be large, so ensure sufficient disk space and monitor index bloa
+  
 
 
 for understanding how index work in postgresql now we use deafult index b-tree in this article.
@@ -2712,10 +2763,106 @@ for understanding how index work in postgresql now we use deafult index b-tree i
 
 
 
-# file, pages
+# Primary Key & Default B-Tree Index
+  When you define a primary key in PostgreSQL. PostgreSQL automatically creates a unique index on the primary key column using a B-Tree index.
 
-# heap
+# B-Tree Index
+  1. B-Tree (Balanced Tree) is the default index type in PostgreSQL.
 
-# cluster and non clustered
+  2. It organizes data in a sorted tree structure, allowing efficient:
 
-# btree
+    1. Exact lookups (WHERE id = 5)
+
+    2. Range queries (WHERE id BETWEEN 1 AND 100)
+
+    3. Ordered operations (ORDER BY id)
+
+Think of it like a sorted tree where each level helps eliminate half the search space — very efficient (O(log n) complexity).
+
+# What is a Clustered Index?
+A clustered index is not a separate index type in PostgreSQL — it's a way of physically ordering the table's rows based on the index. You can manually cluster a table using:
+
+```sql
+CLUSTER users USING users_pkey;
+```
+This means:
+  1. PostgreSQL rewrites the table rows in the order of the index.
+  2. Only one index can be used for clustering.
+  3. It’s a one-time operation — the table does not stay clustered if new rows are added or updated later.
+  4. To maintain clustering, you must run CLUSTER again.
+
+# How it works:
+  1. PostgreSQL creates a temporary copy of the table, sorts the data by the index, and rewrites it back to disk.
+  2. It doesn't keep the clustering — unlike some other databases like SQL Server or MySQL (InnoDB), where clustering is automatic with primary keys.
+
+
+# What is a Non-Clustered Index?
+  All regular indexes in PostgreSQL (including primary key indexes unless CLUSTER is run) are non-clustered by default.
+
+# How non-clustered indexes work:
+  1. The index stores pointers (tuple identifiers: CTIDs) to the actual rows in the heap.
+  2. When you query using the index, PostgreSQL:
+    3. Finds matching keys in the B-Tree
+    4. Uses CTIDs to fetch full row data from the heap (table)
+
+
+# What is a B-Tree index in PostgreSQL?
+
+  1. A B-Tree (Balanced Tree) index is the default and most common index type in PostgreSQL.
+  2. It stores sorted data in a tree structure.
+  3. It's very efficient for searching with operators like =, <, <=, >, >=, BETWEEN, and IN.
+  4. The "B" in B-Tree stands for Balanced — meaning all leaf nodes (where the actual data pointers live) are at the same depth. No matter where you look, it takes about the same number of steps.
+  5. PostgreSQL uses the tree to quickly find where the value should be. It navigates from root → child → leaf (logarithmic time, O(log n)) and finds rows fast.
+
+
+# How B-Tree Works:
+  1. For a single column:
+
+    1. PostgreSQL builds a tree with sorted keys from that column.
+    2. Each node in the tree holds keys and pointers to child nodes.
+    3. Leaf nodes store references (pointers) to the actual rows (tuples) in the table.
+
+  2. For composite (multi-column) indexes:
+
+    1. The tree sorts first by the first column, then within that by the second column, then third, and so on.
+    2. It's like sorting a spreadsheet: first by last_name, then by first_name, etc.
+
+
+# single column index
+
+```sql
+CREATE INDEX idx_users_email ON users (email);
+```
+
+# For single column index query usages b-tree:
+  1. SELECT * FROM users WHERE email = 'a@example.com';  Exact match = is perfect for B-Tree.
+  2. SELECT * FROM users WHERE email > 'b@example.com';  >, <, >=, <= are great for B-Tree.
+  3. SELECT * FROM users WHERE email LIKE 'abc%';  Prefix search is good, B-Tree can help.
+
+# For single column index query not usage b-tree:
+  1. SELECT * FROM users WHERE lower(email) = 'a@example.com';  Function on column (lower(email)) breaks index unless you have a function index.
+  2. SELECT * FROM users WHERE email LIKE '%abc';  % at the beginning prevents B-Tree use.
+
+
+# Composite Index (Multi-Column)
+```sql
+CREATE INDEX idx_users_last_first ON users (last_name, first_name);
+```
+# For Composite index query usages b-tree:
+  1. SELECT * FROM users WHERE last_name = 'Smith'; Only uses first column — OK.
+  2. SELECT * FROM users WHERE last_name = 'Smith' AND first_name = 'John'; Uses both columns — ideal.
+  3. SELECT * FROM users WHERE last_name > 'S'; Can do range scan on first column.
+  4. SELECT * FROM users WHERE last_name = 'Smith' AND first_name > 'J';  Exact match first, then range on second — good.
+
+# For Composite column index query not usage b-tree:
+  1. SELECT * FROM users WHERE first_name = 'John'; Skips first column — can't use index efficiently.
+
+# Rules to Remember:
+
+  1. B-Tree works best for: =, <, <=, >, >=, BETWEEN, LIKE 'abc%'.
+  2. B-Tree doesn't work when:
+    1. You put functions on columns (unless using function-based index).
+    2. You do wildcard % at start (e.g., LIKE '%abc').
+    3. You skip columns in composite index.
+
+
