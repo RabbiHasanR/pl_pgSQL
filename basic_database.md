@@ -2866,3 +2866,465 @@ CREATE INDEX idx_users_last_first ON users (last_name, first_name);
     3. You skip columns in composite index.
 
 
+
+
+
+# 📘 Complete Guide to Hash Index in PostgreSQL
+
+PostgreSQL supports multiple types of indexes, and among them is the **Hash Index**, which is optimized for **equality comparisons** (e.g., `=` operator). Though not as widely used as B-trees, hash indexes have improved significantly since PostgreSQL 10, including support for **write-ahead logging (WAL)** and **crash safety**.
+
+---
+
+## 🔹 When to Use a Hash Index
+
+Use a hash index when:
+
+- You only perform **equality queries** (e.g., `WHERE email = 'xyz'`)
+- You do **not** need ordering or range queries (`<`, `>`, `BETWEEN`)
+- Space efficiency or lookup speed on static data is critical
+
+---
+
+## ⚙️ How Hash Index Works Internally
+
+### 🔢 Serial Flow
+
+1. **Meta Page**: Maintains global metadata about the index
+2. **Hash Function**: Converts key to hash value
+3. **Bucket Mapping**: Hash maps to a specific bucket using bitmask
+4. **Primary Bucket Page**: Initial storage location for index tuples
+5. **Overflow Pages**: Used if bucket overflows
+6. **Bitmap Pages**: Track availability of overflow pages
+
+---
+
+### 1. 🧮 Hash Function
+
+PostgreSQL applies a **hash function** to the indexed column’s value to produce a 32-bit or 64-bit integer. This hash value determines the **bucket** in which the row will be stored.
+
+```sql
+bucket = hash(key) & mask
+```
+
+Where `mask` is managed by the meta page.
+
+---
+
+### 2. 🪣 Buckets
+
+A bucket corresponds to a set of pages where entries with the same hash value range are stored. Each bucket has one or more pages to handle collisions. The number of buckets is always a power of two.
+
+---
+
+### 3. 📄 Primary Bucket Page
+
+Each bucket starts with a **primary bucket page**, which holds index tuples (references to table rows) for keys that map to that bucket.
+
+- It is the first page associated with a bucket.
+- If this page is full, PostgreSQL will allocate **overflow pages**.
+- Each index entry in the primary page includes:
+  - Hash key
+  - Tuple pointer (TID)
+  - Tuple size metadata
+
+---
+
+### 4. 📄 Overflow Pages
+
+If a bucket's primary page is full, additional **overflow pages** are allocated. These pages form a **linked list** to handle high collision density.
+
+---
+
+### 5. 🧾 Meta Page
+
+The first page (block 0) in the index is the **meta page**, which contains global index state:
+
+| Field        | Description                                   |
+| ------------ | --------------------------------------------- |
+| `magic`      | Signature to validate index type              |
+| `version`    | Index format version                          |
+| `ntuples`    | Total number of tuples in index               |
+| `buckets`    | Number of primary buckets                     |
+| `ovfl_point` | Current overflow allocation split point       |
+| `firstfree`  | Pointer to the first free overflow page       |
+| `highmask`   | Used for bucket mapping                       |
+| `lowmask`    | Used during bucket expansion                  |
+| `spares[]`   | Spare pages list for overflow bucket tracking |
+
+You can inspect the meta page using:
+
+```sql
+SELECT * FROM hash_metap('your_hash_index');
+```
+
+---
+
+### 6. 🎯 How Collisions Are Handled
+
+#### Hash Collisions:
+
+- Multiple keys may generate the same hash or map to the same bucket.
+- When too many entries map to a bucket and it overflows, PostgreSQL links **overflow pages** to that bucket.
+
+#### Bucket Overflow Pages:
+
+- Each overflow page stores additional entries that don’t fit in the primary page.
+- Overflow pages are managed through `` and `` in the meta page.
+
+---
+
+### 7. 🗺 Bitmap Pages
+
+- Bitmap pages act like **bitmaps** to track **free/used overflow pages**.
+- Enable quick lookup and reuse of freed overflow pages.
+
+---
+
+### 8. ➕ Index Expansion
+
+- Hash indexes grow by **doubling the number of buckets**.
+- This is managed by updating the `highmask` and `lowmask`, and splitting buckets when the number of tuples exceeds a threshold.
+
+---
+
+## 📊 Diagram: Hash Index Internal Structure
+
+```text
+┌────────────┐
+│  Meta Page │◄─────── Global index metadata
+└────┬───────┘
+     │
+     ▼
+┌────────────┐
+│  Hash(Key) │◄─────── Apply hash function
+└────┬───────┘
+     │
+     ▼
+┌────────────┐
+│  Bucket N  │◄─────── Determined via `hash & mask`
+└────┬───────┘
+     │
+     ▼
+┌────────────┐   ┌────────────┐
+│ Primary Pg │→→│ Overflow Pg│→→ more...
+└────────────┘   └────────────┘
+     ▼
+  Bitmap Pg (tracks overflow page status)
+```
+
+---
+
+## 🧪 Performance Characteristics
+
+| Feature                  | Hash Index                | B-Tree Index |
+| ------------------------ | ------------------------- | ------------ |
+| Equality performance     | ✅ Often faster            | ✅ Fast       |
+| Range queries            | ❌ Not supported           | ✅ Supported  |
+| Ordering                 | ❌ Not maintained          | ✅ Maintained |
+| Disk usage               | ⚠️ Can grow with overflow | ✅ Compact    |
+| WAL support (since PG10) | ✅ Supported               | ✅ Supported  |
+
+---
+
+## 🛠 Creating a Hash Index
+
+```sql
+CREATE INDEX idx_hash_email ON users USING hash (email);
+```
+
+---
+
+## 🧰 Inspecting Hash Index Internals
+
+```sql
+-- Enable extension
+CREATE EXTENSION pageinspect;
+
+-- Get meta page info
+SELECT * FROM hash_metap('idx_hash_email');
+
+-- Check bitmap pages, overflow etc.
+SELECT * FROM hash_page_items('idx_hash_email', 1);
+```
+
+---
+
+## 🚧 Caveats & Limitations
+
+- **Only supports **``** operator**
+- **No multi-column support**
+- Can grow large if many hash collisions occur
+- Historically was not WAL-logged (fixed in PostgreSQL 10+)
+- Cannot be used for ordering or range scans
+
+---
+
+## 🧠 Summary
+
+Hash indexes in PostgreSQL are specialized tools useful for fast equality comparisons. Their internal structure—featuring meta pages, bucket pages, overflow pages, and bitmap tracking—makes them well-suited for very specific use-cases. Understanding their behavior helps optimize storage and query performance in equality-heavy workloads.
+
+---
+
+
+
+
+
+# 📘 Complete Guide to Bitmap Index and Bitmap Scans in Databases
+
+Bitmap indexing is a powerful technique used in databases, particularly data warehouses and analytical systems, to efficiently query large datasets with low-cardinality columns. Although PostgreSQL does **not** natively support standalone bitmap indexes, it uses **bitmap index scans** internally for performance optimization. In contrast, databases like Oracle, SAP HANA, and Apache Druid do support true bitmap indexes.
+
+---
+
+## 🔍 What Is a Bitmap Index?
+
+A **bitmap index** represents the existence of values in a column using a series of **bitmaps**, where:
+- Each distinct value in the column has a bitmap.
+- Each bitmap is a bit array where the i-th bit is 1 if the row has that value, otherwise 0.
+
+### 🧾 Example: Gender Column (Low Cardinality)
+
+For a `gender` column with 3 values (M, F, NULL):
+
+| Row | Gender |
+|-----|--------|
+| 1   | M      |
+| 2   | F      |
+| 3   | NULL   |
+| 4   | M      |
+
+Bitmaps:
+- **M**: `1 0 0 1`
+- **F**: `0 1 0 0`
+- **NULL**: `0 0 1 0`
+
+---
+
+## ⚙️ How Bitmap Index Works
+
+### ✅ Efficient Filtering
+- Bitwise operations (`AND`, `OR`) on bitmaps allow rapid filtering.
+- Great for **ad-hoc queries** and **multi-column filters** in analytics.
+
+### 🔄 Compression: Run-Length Encoding (RLE)
+Bitmap indexes often use RLE to compress long runs of 0s or 1s.
+
+#### 🔢 Example:
+- Uncompressed bitmap: `00000000111111111100`
+- RLE Compressed: `[(0,8), (1,10), (0,2)]`
+
+This saves significant storage space and speeds up processing.
+
+---
+
+## 🏢 Bitmap Index in Data Warehouses
+
+Bitmap indexes are ideal for **analytical databases** where:
+- Data is large (millions to billions of rows)
+- Queries involve multiple low-cardinality filters
+- OLAP (read-heavy, write-light) workloads are common
+
+**Used in**:
+- Oracle
+- Apache Druid
+- SAP HANA
+- Amazon Redshift (internally)
+- ClickHouse (compressed bitmap joins)
+
+---
+
+## 🧠 PostgreSQL and Bitmap Index Scans
+
+PostgreSQL doesn’t support standalone bitmap indexes, but it supports **bitmap index scans**, a technique used by the query planner.
+
+### 🔹 How It Works:
+1. PostgreSQL identifies index entries matching the condition.
+2. Collects tuple pointers into a **bitmap in memory**.
+3. Sorts the bitmap.
+4. Fetches rows in an efficient order.
+
+### 💡 When Used:
+- When multiple indexes are involved
+- Large result sets are expected
+- Non-sequential disk access can be minimized
+
+### 🔍 Example:
+```sql
+EXPLAIN ANALYZE SELECT * FROM users WHERE gender = 'M' AND status = 'active';
+```
+PostgreSQL might perform two index scans, merge bitmaps, then access the heap efficiently.
+
+---
+
+## ✅ When to Use Bitmap Indexes
+
+Use bitmap indexes (or scan techniques) when:
+- You have **low-cardinality columns** (e.g., gender, status)
+- Queries involve **AND/OR filters** across multiple columns
+- You work on **read-heavy, infrequently updated** tables
+
+---
+
+## ⚠️ Limitations of Bitmap Indexes
+
+### Disadvantages:
+- Not ideal for high-cardinality columns (e.g., IDs)
+- Poor performance with **frequent updates/deletes**
+- Can bloat if data is not well-clustered
+
+---
+
+## 📊 Advantages of Bitmap Indexes
+
+| Feature              | Benefit                                  |
+|---------------------|-------------------------------------------|
+| Low-cardinality cols| Excellent compression and scan speed      |
+| AND/OR Queries       | Fast boolean bitmap operations           |
+| OLAP workloads       | Designed for analytical performance      |
+
+---
+
+## 🧪 Real-World Example (Oracle):
+
+```sql
+CREATE BITMAP INDEX idx_gender ON employees(gender);
+
+SELECT * FROM employees
+WHERE gender = 'F' AND marital_status = 'single';
+```
+- Two bitmap indexes are combined using `AND`.
+- Only rows satisfying both are fetched.
+
+---
+
+## 🧠 Summary
+
+- Bitmap indexes map data to bit arrays for fast logical operations.
+- Used extensively in data warehouses for low-cardinality filters.
+- PostgreSQL uses bitmap **scans**, not true bitmap indexes.
+- Compression (RLE) makes them efficient on massive datasets.
+
+Bitmap indexing is a powerful concept—especially in OLAP systems—designed to maximize scan efficiency with minimal disk I/O and memory footprint.
+
+bitmap article: https://www.linkedin.com/pulse/system-design-data-engineers-role-bitmap-indexes-soumya-sankar-panda-pncwc/
+
+
+
+
+🛡️ Mastering Transactions, ACID, and Isolation Levels in Databases (with PostgreSQL Examples)
+In the world of databases, data integrity and reliability are everything. Whether you're managing a banking app, an e-commerce platform, or a SaaS backend, understanding how transactions, ACID properties, and isolation levels work is critical for ensuring safe and consistent data operations.
+
+Let’s dive into what these concepts mean, why they matter, and how to use them correctly — with real-world examples and PostgreSQL code.
+
+🔄 What is a Transaction?
+A transaction is a group of database operations that are treated as a single unit of work. The key idea: all operations must succeed together or fail together. This ensures your database remains consistent.
+
+💡 Real-World Example: Bank Transfer
+When transferring ₹100 from Alice to Bob:
+
+You subtract ₹100 from Alice’s account.
+
+You add ₹100 to Bob’s account.
+
+Both steps must succeed. If one fails, the system should roll everything back.
+
+✅ PostgreSQL Transaction Example
+```sql
+BEGIN;
+
+UPDATE accounts SET balance = balance - 100 WHERE name = 'Alice';
+UPDATE accounts SET balance = balance + 100 WHERE name = 'Bob';
+
+COMMIT;
+```
+If something goes wrong, like a missing account, use ROLLBACK instead of COMMIT.
+
+
+💠 What is ACID?
+ACID is a set of properties that ensure safe and reliable database transactions:
+
+| Property        | Meaning                                                                           |
+|----------------|-----------------------------------------------------------------------------------|
+| **Atomicity**   | All operations in a transaction happen or none do.                               |
+| **Consistency** | Data moves from one valid state to another.                                      |
+| **Isolation**   | Concurrent transactions don't interfere with each other.                         |
+| **Durability**  | Once committed, the results are permanent — even after a crash.                  |
+
+
+🏦 Example:
+In a bank transfer, atomicity ensures no money disappears or doubles. Durability ensures the transfer isn't lost during a power outage.
+
+✅ Pros & Cons of Using Transactions
+
+| Pros                          | Cons                              |
+|-------------------------------|-----------------------------------|
+| Ensures data consistency      | Slight performance overhead       |
+| Allows safe rollback on error | Risk of deadlocks if poorly handled |
+| Essential for financial/data-critical systems | Can complicate logic in high-concurrency scenarios |
+
+🔍 Understanding Isolation Levels
+Isolation levels define how transactions interact with each other when accessing shared data concurrently.
+
+There are 4 standard isolation levels defined by SQL:
+
+| Level              | Prevents             | Allows                        | PostgreSQL Support |
+|--------------------|----------------------|-------------------------------|--------------------|
+| Read Uncommitted    | Nothing              | Dirty Reads, Non-repeatable Reads, Phantom Reads | Not supported natively |
+| Read Committed      | Dirty Reads          | Non-repeatable Reads, Phantom Reads             | ✅ Default in PostgreSQL |
+| Repeatable Read     | Dirty + Non-repeatable Reads | Phantom Reads            | ✅ |
+| Serializable        | All of the above     | None                          | ✅ Strongest level |
+
+
+⚠️ Isolation Level Phenomena Explained
+
+| Phenomenon              | What Happens                                                   | Example |
+|--------------------------|----------------------------------------------------------------|---------|
+| **Dirty Read**           | A transaction reads uncommitted data from another transaction | A sees B’s temporary update |
+| **Non-repeatable Read**  | A row read twice gives different values                       | A reads balance, B updates it mid-way |
+| **Phantom Read**         | New rows appear in repeated queries during a transaction      | A queries `WHERE balance > 1000`, B inserts matching row later |
+
+🧪 Phenomena vs Isolation Levels
+
+| Isolation Level     | Dirty Read | Non-Repeatable Read | Phantom Read |
+|---------------------|------------|----------------------|---------------|
+| Read Uncommitted    | ❌ Allowed | ❌ Allowed           | ❌ Allowed     |
+| Read Committed      | ✅ Prevented | ❌ Allowed           | ❌ Allowed     |
+| Repeatable Read     | ✅ Prevented | ✅ Prevented         | ❌ Allowed     |
+| Serializable        | ✅ Prevented | ✅ Prevented         | ✅ Prevented   |
+
+🧭 Choosing the Right Isolation Level
+| Use Case                        | Recommended Level    |
+|---------------------------------|----------------------|
+| Analytics / Reporting           | Read Committed       |
+| Bank Transactions               | Repeatable Read / Serializable |
+| Booking Systems / Inventory     | Serializable         |
+| High-speed reads with low conflict | Read Committed    |
+
+
+💡 Real-World Scenario: Flight Booking System
+Imagine a flight booking system:
+
+You check available seats (shows 3).
+
+Another user books 2 seats.
+
+You refresh and still see 3 due to transaction isolation.
+
+In Repeatable Read, this prevents data from changing during your transaction.
+In Serializable, PostgreSQL will even detect conflicts and retry transactions to ensure full correctness.
+
+
+⚖️ Pros & Cons of Isolation Levels
+
+| Level            | Pros                                    | Cons                                  |
+|------------------|-----------------------------------------|---------------------------------------|
+| Read Uncommitted | Fastest                                 | Unsafe, allows dirty reads            |
+| Read Committed   | Balanced, good default                  | Still allows inconsistent reads       |
+| Repeatable Read  | Strong consistency                      | May require retries                   |
+| Serializable     | Full safety, prevents all anomalies     | Slowest, high locking or serialization errors |
+
+🔚 Conclusion
+Understanding transactions, ACID, and isolation levels helps you write safer and more predictable database applications. In systems like PostgreSQL, these features are built-in and powerful — but must be used with care.
+
+🧠 Rule of Thumb:
+Use Read Committed for general use, Repeatable Read for financial ops, and Serializable for critical booking or inventory systems.
+

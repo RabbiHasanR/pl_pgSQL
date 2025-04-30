@@ -35,3 +35,6 @@ Let’s break it down in simple terms:
 32. cap theoram
 33. batch and stream processing
 34. strong vs eventualy consistent
+35. 𝐐𝐮𝐞𝐫𝐲 𝐎𝐩𝐭𝐢𝐦𝐢𝐳𝐚𝐭𝐢𝐨𝐧
+36. 𝐂𝐨𝐧𝐧𝐞𝐜𝐭𝐢𝐨𝐧 𝐏𝐨𝐨𝐥𝐢𝐧𝐠
+37.  𝐌𝐚𝐭𝐞𝐫𝐢𝐚𝐥𝐢𝐳𝐞𝐝 𝐕𝐢𝐞𝐰𝐬
