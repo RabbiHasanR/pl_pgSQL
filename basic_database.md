@@ -3411,10 +3411,337 @@ Use them wisely to ensure your PostgreSQL database remains efficient and fast.
 
 
 
-# database locking
 
+
+
+🔄 Concurrency Control in Databases – The Complete Guide
+In modern applications, multiple users or processes often access and modify the database at the same time. Ensuring that these concurrent operations don’t interfere with each other is the job of Concurrency Control.
+
+Whether it's booking a ticket, updating inventory, or transferring money, concurrency control ensures data consistency, integrity, and isolation.
+
+🧠 What Is Concurrency Control?
+Concurrency control is the mechanism that manages simultaneous operations without conflicting, corrupting, or losing data.
+
+It ensures that:
+
+Multiple users can read/write without stepping on each other’s toes.
+
+The database maintains its ACID properties (especially Isolation & Consistency).
+
+Users see consistent and correct data.
+
+⚖️ Why Is Concurrency Control Important?
+Imagine:
+
+Two users try to book the last seat on a flight at the same time.
+
+Both systems see the seat as available and assign it.
+
+Boom! Double booking—a classic race condition.
+
+This is what concurrency control prevents.
+
+🧪 Techniques for Concurrency Control
+There are two main strategies:
+
+1. 🔐 Lock-Based Concurrency Control (Pessimistic)
+Involves locking data to prevent conflicts.
+
+Shared Lock (Read Lock):
+Multiple users can read but cannot write.
+
+📚 Real-world analogy: Reading a book in a library. Others can read, no one can write in it.
+
+Exclusive Lock (Write Lock):
+Only one user can read/write. Others must wait.
+
+✍️ Real-world analogy: One person writing on a whiteboard. Others must wait to read or write.
+
+🔒 Example:
+Bank App: User A transfers ₹500 to B.
+
+Lock A's and B's rows with exclusive locks.
+
+Prevent others from reading/updating until the transaction commits.
+
+2. 🌀 MVCC (Multi-Version Concurrency Control)
+Instead of locking, MVCC allows multiple versions of data to exist.
+
+Readers see a snapshot of data.
+
+Writers create a new version without blocking readers.
+
+Popular in PostgreSQL, Oracle, MySQL (InnoDB).
+
+📦 Example:
+E-commerce site:
+
+Admin updates product price.
+
+Buyer is checking out the same product.
+
+With MVCC:
+
+Buyer sees the old price (snapshot).
+
+Admin's update doesn’t block the buyer.
+
+No lock conflicts!
+
+⚖️ Optimistic vs Pessimistic Concurrency Control
+These are two different philosophies of handling concurrent access.
+
+✅ Pessimistic Concurrency Control
+“Assume conflict will happen—lock now.”
+
+Locks data at the start.
+
+Prevents others from accessing it.
+
+Used in high-conflict environments.
+
+🏦 Real-World Example:
+Bank transfers: Data integrity is critical. If two agents update the same account, locking ensures safety.
+
+✅ Advantages:
+Prevents conflicts 100%.
+
+Safer for critical operations.
+
+❌ Disadvantages:
+Slower due to locks.
+
+Risk of deadlocks.
+
+Low concurrency.
+
+🌤️ Optimistic Concurrency Control
+“Assume no conflict—check at the end.”
+
+No locks during operation.
+
+On commit, it checks if data changed.
+
+If yes, it aborts or retries.
+
+🛒 Real-World Example:
+Inventory system:
+
+Two users update stock.
+
+System checks if the version number is unchanged before committing.
+
+✅ Advantages:
+High performance.
+
+Great for low-conflict scenarios.
+
+No deadlocks.
+
+❌ Disadvantages:
+Risk of failure at commit.
+
+More complex logic (e.g., versioning).
+
+Not suitable for high-contention systems.
+
+
+🔍 Summary Table
+
+| Feature           | Pessimistic         | Optimistic       | MVCC                    |
+| ----------------- | ------------------- | ---------------- | ----------------------- |
+| Conflict Handling | Prevents by locking | Detects after    | Avoids with versions    |
+| Performance       | Slower              | Faster           | Very Fast for reads     |
+| Locking           | Yes                 | No               | Minimal (internal)      |
+| Deadlocks         | Possible            | No               | Rare                    |
+| Use Case          | High-conflict       | Low-conflict     | Mixed workload          |
+| Example           | Bank transfer       | E-commerce stock | PostgreSQL reads/writes |
+
+
+💬 Final Thoughts
+Concurrency control is essential for modern applications to maintain data integrity, accuracy, and performance under load.
+
+Use MVCC when you want high concurrency and minimal blocking.
+
+Use Pessimistic locking in critical, high-conflict workflows.
+
+Use Optimistic locking for light, distributed, or UI-driven systems where conflicts are rare.
+
+
+
+
+🔐 PostgreSQL Locking Explained – All Types with Examples
+PostgreSQL is a powerful relational database that offers fine-grained locking mechanisms to handle concurrent access to data. Understanding how locking works is key to preventing performance issues, data anomalies, or even deadlocks.
+
+In this post, we’ll cover:
+
+What is locking in PostgreSQL?
+
+Types of locks: row, table, advisory, etc.
+
+Examples with SQL
+
+Real-world analogies
+
+Use cases, pros, and cons
+
+🧠 What Is Locking in PostgreSQL?
+Locking in PostgreSQL is how the database controls access to data when multiple transactions try to read or write the same rows, tables, or structures concurrently.
+
+The goal is to maintain:
+
+Data consistency
+
+Isolation (ACID)
+
+Safe concurrent operations
+
+PostgreSQL offers a multi-level locking system—from rows to full tables and even custom locks.
+
+🔐 PostgreSQL Lock Types (Overview)
+
+| Lock Type          | Scope        | Use Case                             |
+| ------------------ | ------------ | ------------------------------------ |
+| Row-level Lock     | Row          | `SELECT ... FOR UPDATE`, `FOR SHARE` |
+| Table-level Lock   | Table        | `LOCK TABLE`                         |
+| Advisory Lock      | User-defined | Application-controlled logic         |
+| Deadlock Detection | Transaction  | Built-in mechanism to resolve cycles |
+
+1. 🔎 Row-Level Locks
+These are acquired when you perform SELECT ... FOR UPDATE or modify a row.
+
+🔹 Types:
+FOR UPDATE: Prevents others from modifying the row.
+
+FOR NO KEY UPDATE: Less strict, used in foreign key updates.
+
+FOR SHARE: Allows other readers but blocks writers.
+
+FOR KEY SHARE: Allows updates, but prevents deletion.
+
+🧪 Example:
+```sql
+BEGIN;
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
+-- Row is now locked until COMMIT or ROLLBACK
+```
+🧠 Analogy: One person holds a product in hand (row)—others can see it but not buy it.
+
+2. 📊 Table-Level Locks
+These locks apply to an entire table, either explicitly or internally during operations like ALTER TABLE.
+🔹 Acquired Using:
+```sql
+LOCK TABLE users IN ACCESS EXCLUSIVE MODE;
+```
+🔹 Lock Modes:
+| Mode                   | Description                       |
+| ---------------------- | --------------------------------- |
+| ACCESS SHARE           | Default for `SELECT`              |
+| ROW SHARE              | For foreign keys                  |
+| ROW EXCLUSIVE          | For `INSERT`, `UPDATE`, `DELETE`  |
+| SHARE UPDATE EXCLUSIVE | Used internally                   |
+| SHARE                  | Prevents data change              |
+| SHARE ROW EXCLUSIVE    | Rare, blocks many writes          |
+| EXCLUSIVE              | Blocks reads and writes           |
+| ACCESS EXCLUSIVE       | Full lock, used for `ALTER TABLE` |
+
+
+🧪 Example: Lock Table for Safe Update
+```sql
+BEGIN;
+LOCK TABLE orders IN EXCLUSIVE MODE;
+UPDATE orders SET status = 'shipped' WHERE status = 'paid';
+COMMIT;
+```
+🧠 Analogy: Store closes the entire aisle while staff restocks.
+
+
+3. 🧰 Advisory Locks
+These are custom user-defined locks that are not tied to database rows or tables.
+
+Useful when:
+
+You need application-level control.
+
+Avoid DB structure locks.
+
+Locking logic is not about specific data rows.
+🧪 Example:
+```sql
+-- Acquire a session-level advisory lock
+SELECT pg_advisory_lock(12345);
+
+-- Do something...
+
+-- Release lock
+SELECT pg_advisory_unlock(12345);
+```
+🧠 Analogy: Two apps check out the same shared resource via a ticketing system.
+
+
+4. 🔄 Deadlock Detection
+PostgreSQL has built-in deadlock detection. If two transactions wait on each other forever, PostgreSQL kills one.
+🧪 Example:
+```sql
+-- Transaction A
+BEGIN;
+UPDATE employees SET salary = 50000 WHERE id = 1;
+
+-- Transaction B
+BEGIN;
+UPDATE employees SET salary = 60000 WHERE id = 2;
+
+-- Then both try to update each other's rows — deadlock
+```
+PostgreSQL will automatically detect and abort one transaction to resolve the deadlock.
+
+📈 Lock Monitoring in PostgreSQL
+You can inspect locks using:
+```sql
+SELECT * FROM pg_locks pl
+JOIN pg_stat_activity psa ON pl.pid = psa.pid;
+```
+
+✅ When to Use What?
+| Lock Type      | Use When...                            |
+| -------------- | -------------------------------------- |
+| Row Lock       | You’re updating/deleting specific rows |
+| Table Lock     | Large bulk ops or schema changes       |
+| Advisory Lock  | Application-level concurrency          |
+| MVCC (default) | Reading/updating rows in most web apps |
+
+⚖️ Pros and Cons
+✅ Pros of PostgreSQL Locking
+Fine-grained control (row to table)
+
+Deadlock detection
+
+MVCC avoids many locks for reads
+
+Advisory locks offer flexibility
+
+❌ Cons
+Complex lock interactions
+
+Lock contention can hurt performance
+
+Misuse leads to deadlocks or blocking
+
+💬 Final Thoughts
+PostgreSQL's locking system is powerful and flexible, enabling developers to write safe, concurrent applications. By understanding when and how locks are used, you can avoid performance pitfalls and keep your data safe under load.
+
+Before reaching for LOCK TABLE or FOR UPDATE, consider:
+
+Do you need to lock at all?
+
+Can MVCC handle your use case?
+
+Would optimistic control or advisory locks be better?
+
+# blog post about postgresql locks: https://medium.com/@hnasr/postgres-locks-a-deep-dive-9fc158a5641c
 
 
 # pivot and unpivot
 
 # functions, procedure, triggers
+
