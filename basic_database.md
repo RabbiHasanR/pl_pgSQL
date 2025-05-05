@@ -3311,7 +3311,7 @@ You refresh and still see 3 due to transaction isolation.
 
 In Repeatable Read, this prevents data from changing during your transaction.
 In Serializable, PostgreSQL will even detect conflicts and retry transactions to ensure full correctness.
-
+ 
 
 ⚖️ Pros & Cons of Isolation Levels
 
@@ -3328,3 +3328,93 @@ Understanding transactions, ACID, and isolation levels helps you write safer and
 🧠 Rule of Thumb:
 Use Read Committed for general use, Repeatable Read for financial ops, and Serializable for critical booking or inventory systems.
 
+
+
+
+# Understanding VACUUM and VACUUM FULL in PostgreSQL
+
+In the world of databases, especially PostgreSQL, maintaining performance and disk efficiency is crucial. One of the key tools PostgreSQL provides for this purpose is `VACUUM`. In this blog, we will explore what `VACUUM` is, the different types, why they matter, and when to use each.
+
+---
+
+## 🧽 What is VACUUM in a Database?
+
+When you `UPDATE` or `DELETE` rows in PostgreSQL, the old versions of those rows are not immediately removed. Instead, they are marked as *dead tuples* and remain in the database file for rollback and concurrency safety.
+
+Over time, these dead tuples accumulate and consume disk space, leading to performance degradation. This is where `VACUUM` comes in:
+
+* **Removes dead tuples**
+* **Reclaims space within database files**
+* **Prevents transaction ID wraparound**
+* **Updates statistics for the query planner**
+
+> Think of `VACUUM` like a garbage collector for your database.
+
+---
+
+## 🧹 Types of VACUUM
+
+### 1. VACUUM (Standard / Lazy Vacuum)
+
+* **Non-blocking**: Other queries can still read/write.
+* **Does not shrink file size**: Only makes space reusable internally.
+* **Fast and lightweight**: Often triggered automatically via **autovacuum**.
+
+**When to use**: Routine cleanup. Handled automatically in most setups.
+
+### 2. VACUUM FULL
+
+* **Rewrites the entire table**: Removes all bloat and dead tuples.
+* **Releases disk space back to the OS**.
+* **Exclusive lock**: Blocks reads/writes during operation.
+* **Slower and resource-intensive**.
+
+**When to use**: After massive deletions, updates, or when disk space needs to be reclaimed.
+
+---
+
+## 🚀 Real-World Example
+
+Imagine you have a `transactions` table with 10 million rows. You archive and delete 5 million of them.
+
+* After deletion, the table still physically contains the old 5 million rows as dead tuples.
+* Running `VACUUM` marks the space as reusable inside the table, but the disk usage remains the same.
+* Running `VACUUM FULL` actually rewrites the table and frees the space at the OS level.
+
+---
+
+## 🔄 Comparison Table
+
+| Feature              | VACUUM           | VACUUM FULL        |
+| -------------------- | ---------------- | ------------------ |
+| Frees internal space | ✅                | ✅                  |
+| Frees OS disk space  | ❌                | ✅                  |
+| Table Locking        | ❌ (non-blocking) | ✅ (exclusive lock) |
+| Performance Impact   | Low              | High               |
+| Use Case             | Routine clean-up | Major clean-up     |
+
+---
+
+## ⚠️ Best Practices
+
+* **Autovacuum**: PostgreSQL automatically runs `VACUUM` based on table activity.
+* Use `VACUUM FULL` sparingly and during off-peak hours.
+* Monitor table bloat with tools like `pg_stat_user_tables` or extensions like `pgstattuple`.
+
+---
+
+## ✅ Summary
+
+`VACUUM` is essential PostgreSQL maintenance. It keeps your database performant and clean by removing old data remnants. While standard `VACUUM` handles most situations automatically, `VACUUM FULL` is a powerful manual tool when reclaiming disk space is critical.
+
+Use them wisely to ensure your PostgreSQL database remains efficient and fast.
+
+
+
+# database locking
+
+
+
+# pivot and unpivot
+
+# functions, procedure, triggers
