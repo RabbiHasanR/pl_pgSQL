@@ -3741,7 +3741,403 @@ Would optimistic control or advisory locks be better?
 # blog post about postgresql locks: https://medium.com/@hnasr/postgres-locks-a-deep-dive-9fc158a5641c
 
 
-# pivot and unpivot
+# DDL, DML, DCL, TCL
+In databases, DDL, DML, DCL, and TCL are categories of SQL (Structured Query Language) commands, each serving a specific purpose in managing and manipulating data and database structures. Here's a breakdown with examples:
 
-# functions, procedure, triggers
+## 1. DDL (Data Definition Language)
+DDL commands define and modify the structure of database objects like tables, schemas, and indexes.
+Common DDL commands:
+CREATE, ALTER, DROP, TRUNCATE
+
+```sql
+-- Create a table
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    salary NUMERIC
+);
+
+-- Add a new column
+ALTER TABLE employees ADD department VARCHAR(50);
+
+-- Delete the table
+DROP TABLE employees;
+```
+
+## 2. DML (Data Manipulation Language)
+DML commands deal with the manipulation of data stored in the database. These commands allow you to insert, update, delete, and retrieve data.
+Common DML commands:
+SELECT, INSERT, UPDATE, DELETE
+
+```sql
+-- Insert a record
+INSERT INTO employees (name, salary, department) VALUES ('Alice', 50000, 'HR');
+
+-- Retrieve records
+SELECT * FROM employees;
+
+-- Update a record
+UPDATE employees SET salary = 55000 WHERE name = 'Alice';
+
+-- Delete a record
+DELETE FROM employees WHERE name = 'Alice';
+```
+
+## 3. DCL (Data Control Language)
+DCL commands control access to data in the database — mainly who can access or manipulate what.
+Common DCL commands:
+GRANT, REVOKE
+
+```sql
+-- Grant SELECT permission to user 'john'
+GRANT SELECT ON employees TO john;
+
+-- Revoke SELECT permission
+REVOKE SELECT ON employees FROM john;
+```
+
+## 4. TCL (Transaction Control Language)
+TCL commands manage transactions — a group of SQL statements that are executed as a single unit.
+Common TCL commands:
+COMMIT, ROLLBACK, SAVEPOINT
+
+```sql
+BEGIN;
+
+-- Insert a record
+INSERT INTO employees (name, salary, department) VALUES ('Bob', 60000, 'IT');
+
+-- If everything is fine
+COMMIT;
+
+-- Or if there's an error
+-- ROLLBACK;
+```
+
+# ✅ What Does Precompiled Mean?
+Precompiled means the SQL code is parsed, optimized, and stored in an executable form in the database at creation time, not at runtime.
+
+Why It Matters:
+Faster Execution: Because parsing and optimization are already done.
+
+Reduced Runtime Overhead: Execution plan is reused.
+
+Improved Efficiency: Especially for complex or repeated operations.
+
+Applies To:
+✅ Stored Procedures: Yes, they are precompiled.
+
+✅ User-Defined Functions (UDFs): Yes, most are also precompiled (especially in systems like SQL Server, PostgreSQL, Oracle).
+
+# 📦 What is a Database Object?
+A database object is any defined structure or entity in a database that stores or manipulates data.
+
+Examples of Database Objects:
+Tables – Store data
+
+Views – Virtual tables from queries
+
+Indexes – Speed up data retrieval
+
+Stored Procedures – Logic for data processing
+
+User-Defined Functions – Reusable computations
+
+Triggers – Auto-run logic on data change
+
+Sequences – Generate unique values (IDs)
+
+So, when you create a procedure or a function:
+
+It becomes a named, stored entity in the database catalog.
+
+You can view, modify, and control access to it just like any other database object.
+
+
+# 🔧 What is a Stored Procedure?
+A stored procedure is a precompiled set of SQL statements stored in the database, which can perform one or more operations (queries, updates, control logic, etc.).
+
+
+✅ Why Use a Procedure?
+To encapsulate business logic.
+
+To reuse code and reduce duplication.
+
+To improve performance (precompiled execution).
+
+To maintain security (grant execution rights instead of exposing raw tables).
+
+```sql
+CREATE PROCEDURE increase_salary(IN dept_name VARCHAR(50), IN percent INT)
+LANGUAGE SQL
+AS $$
+BEGIN
+  UPDATE employees
+  SET salary = salary + (salary * percent / 100)
+  WHERE department = dept_name;
+END;
+$$;
+
+```
+You can call it like:
+```sql
+CALL increase_salary('HR', 10);
+```
+
+## ✅ Pros of Stored Procedures
+Modular and reusable
+
+Faster due to precompilation
+
+Secure: Permissions can be managed at procedure level
+
+Can include control-of-flow logic (IF, LOOP, etc.)
+
+Supports multiple result sets
+
+## ❌ Cons of Stored Procedures
+Harder to debug and test
+
+Not easily portable across different DBMS
+
+Can become complex if business logic grows too much
+
+Version control is harder than with application code
+
+
+
+
+# 📘 What is a User-Defined Function (UDF)?
+A UDF is a database object that accepts input parameters, performs operations (usually calculations), and returns a value (scalar or table).
+
+## ✅ Why Use a UDF?
+To encapsulate logic for reuse in queries (like computed values).
+
+To improve readability and maintainability.
+
+Ideal for calculation-heavy or repeated expressions.
+
+```sql
+CREATE FUNCTION get_bonus(salary NUMERIC)
+RETURNS NUMERIC
+AS $$
+BEGIN
+  RETURN salary * 0.10;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+Usage:
+```sql
+SELECT name, get_bonus(salary) AS bonus FROM employees;
+```
+
+# ✅ Pros of UDFs
+Reusable and maintainable
+
+Can be used inside SQL expressions (e.g., SELECT, WHERE)
+
+Supports both scalar and table return types
+
+# ❌ Cons of UDFs
+Cannot modify data (in most DBMS)
+
+Limited to deterministic logic
+
+Performance can be slower than equivalent inline SQL
+
+Cannot use transaction control like COMMIT or ROLLBACK
+
+# 🔄 Difference Between Procedure and User-Defined Function
+
+| Feature             | Stored Procedure                         | User-Defined Function                      |
+| ------------------- | ---------------------------------------- | ------------------------------------------ |
+| Returns             | Can return 0, 1, or multiple values      | Must return a value (scalar or table)      |
+| Usage               | Invoked using `CALL`                     | Used in SQL statements (`SELECT`, `WHERE`) |
+| Data Modification   | Can modify data (INSERT, UPDATE, DELETE) | Typically cannot modify data               |
+| Transaction Control | Yes (`COMMIT`, `ROLLBACK`)               | No transaction control                     |
+| Output              | Can return result sets                   | Cannot return multiple result sets         |
+| Use in Queries      | No                                       | Yes (as expressions)                       |
+| Side Effects        | Allowed                                  | Not allowed                                |
+
+# Can You Call a Function Inside a Procedure?
+Yes — almost always.
+
+Stored procedures commonly call functions to:
+
+Compute values
+
+Validate inputs
+
+Format outputs
+
+# Can You Call a Procedure Inside a Function?
+Usually NO — with exceptions:
+| DBMS       | Can Call Procedure in Function?                                                |
+| ---------- | ------------------------------------------------------------------------------ |
+| PostgreSQL | ⚠️ Yes, only under **very strict** conditions (must be declared as `VOLATILE`) |
+| SQL Server | ❌ No — not allowed                                                             |
+| MySQL      | ❌ No — not allowed                                                             |
+| Oracle     | ⚠️ Possible in PL/SQL, but discouraged unless function is not used in queries  |
+
+
+
+# What is deadlock?
+A deadlock in a database occurs when two or more transactions are waiting for each other to release resources, and none of them can proceed — creating a circular wait and halting progress indefinitely.
+
+# 🔄 Deadlock Explained Simply
+Imagine this:
+
+Transaction A locks Row 1, then tries to lock Row 2.
+
+Transaction B locks Row 2, then tries to lock Row 1.
+
+Now both are waiting on each other, and neither can move forward. That’s a deadlock.
+
+# 💻 Real Database Example (PostgreSQL / MySQL)
+
+```sql
+-- Transaction A
+BEGIN;
+UPDATE accounts SET balance = balance - 100 WHERE id = 1; -- Locks row 1
+
+-- Meanwhile, Transaction B
+BEGIN;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2; -- Locks row 2
+
+-- Back to Transaction A
+UPDATE accounts SET balance = balance + 100 WHERE id = 2; -- WAITING for B to release row 2
+
+-- Back to Transaction B
+UPDATE accounts SET balance = balance - 100 WHERE id = 1; -- WAITING for A to release row 1
+
+-- 🔒 DEADLOCK
+
+```
+
+# ⚠️ Result:
+Most databases will detect the deadlock automatically.
+
+One transaction is forcefully rolled back to resolve the deadlock.
+
+# 🛡️ How to Avoid Deadlocks
+
+✅ 1. Consistent Locking Order
+Always access tables/rows in the same order across transactions.
+
+If both A and B always access row 1 before row 2, deadlock won’t happen.
+
+✅ 2. Keep Transactions Short
+Hold locks for as little time as possible. The longer a transaction runs, the higher the deadlock risk.
+
+✅ 3. Use NOWAIT or SKIP LOCKED (PostgreSQL-specific)
+```sql
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE NOWAIT;
+```
+This fails immediately if the row is locked, avoiding waiting loops.
+
+✅ 4. Retry Logic in Application
+Handle deadlock errors (e.g., error code 40P01 in PostgreSQL), and retry the transaction.
+
+✅ 5. Avoid Manual Locks When Possible
+Let the DBMS handle locking automatically, or use optimistic locking (e.g., version numbers).
+
+# 🧾 Summary
+| Aspect         | Description                                               |
+| -------------- | --------------------------------------------------------- |
+| **What**       | Circular wait where transactions block each other         |
+| **Cause**      | Competing access to resources in opposite order           |
+| **Effect**     | System must kill one transaction to proceed               |
+| **Prevention** | Consistent order, short transactions, retry logic, NOWAIT |
+
+
+# what is race condition?
+A race condition in a database (or in programming in general) occurs when two or more transactions or operations access and manipulate shared data concurrently, and the final outcome depends on the timing or order in which those operations execute.
+
+# 🔥 Why It’s Dangerous?
+Because operations interleave unpredictably, race conditions can cause:
+
+Data inconsistency
+
+Incorrect calculations
+
+Lost updates
+
+Security vulnerabilities
+
+# 🧠 Real-World Analogy
+Imagine two people trying to withdraw money from the same ATM account at the same time.
+Both see the balance is $100.
+Both withdraw $100.
+The account ends up with $-100, but the system never intended to allow that.
+
+# 💻 Real Database Example (Bank Withdrawal)
+Scenario:
+Two users withdraw money at the same time from the same account.
+
+```sql
+-- User A starts:
+BEGIN;
+SELECT balance FROM accounts WHERE id = 1;  -- Reads $100
+
+-- User B starts:
+BEGIN;
+SELECT balance FROM accounts WHERE id = 1;  -- Also reads $100
+
+-- User A withdraws $50
+UPDATE accounts SET balance = 100 - 50 WHERE id = 1;
+
+-- User B withdraws $70
+UPDATE accounts SET balance = 100 - 70 WHERE id = 1;
+
+-- Both COMMIT
+
+```
+
+❌ Final balance: $30, but should have been $100 - 50 - 70 = -$20 (or the second should’ve been rejected).
+This is a race condition — the logic assumes balance hasn’t changed since it was read, but it has, due to the other transaction.
+
+# ⚙️ How to Prevent Race Conditions
+✅ 1. Use Transactions with Proper Isolation Levels
+Use SERIALIZABLE or REPEATABLE READ isolation levels to prevent overlapping changes.
+
+In PostgreSQL:
+```sql
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+```
+✅ 2. Use SELECT FOR UPDATE
+Locks the row while reading, preventing others from modifying it until you commit or rollback.
+```sql
+BEGIN;
+SELECT balance FROM accounts WHERE id = 1 FOR UPDATE;
+-- Safe to read & update now
+UPDATE accounts SET balance = balance - 50 WHERE id = 1;
+COMMIT;
+
+```
+
+✅ 3. Optimistic Locking (Version Check)
+Add a version column, and only allow updates if the version hasn't changed.
+```sql
+UPDATE accounts SET balance = balance - 50, version = version + 1
+WHERE id = 1 AND version = 5;
+
+```
+If the version is not 5 (meaning someone else updated it), the query fails.
+
+✅ 4. Atomic Operations (If Supported)
+Use database features like:
+
+UPDATE ... WHERE ... RETURNING to read + write in one go
+
+UPSERT / ON CONFLICT
+
+# 🧾 Summary
+| Term               | Description                                                       |
+| ------------------ | ----------------------------------------------------------------- |
+| **Race condition** | Unintended behavior from concurrent access to shared data         |
+| **Cause**          | Timing-dependent access with no proper locking or synchronization |
+| **Fix**            | Transactions, row locking, isolation levels, optimistic locking   |
+
 
