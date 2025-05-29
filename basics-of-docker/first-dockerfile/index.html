@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Dockerfile</title>
+    
+    <body>
+        <h1>First Dockerfile</h1>
+        <p>This is a simple Dockerfile example.</p>
+        
+        <h2>Dockerfile Example</h2>
+        <pre>
+            <code>
+                FROM ubuntu:latest
+                RUN apt-get update && apt-get install -y python3
+                COPY . /app
+                WORKDIR /app
+                CMD ["python3", "app.py"]
+            </code>
+        </pre>
+
+        <h2>Build and Run</h2>
+        <p>To build the Docker image, run:</p>
+        <pre><code>docker build -t my-python-app .</code></pre>
+        
+        <p>To run the Docker container, use:</p>
+        <pre><code>docker run my-python-app</code></pre>
+</html>
