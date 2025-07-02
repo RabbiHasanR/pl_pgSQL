@@ -2,11 +2,11 @@ Whether you're prepping for system design interviews or building scalable applic
 
 Let’s break it down in simple terms:
 1. Client-Server Architecture – Like a restaurant: client orders, server serves. done
-2. IP Address – Think of it as the digital home address for your device.
-3. DNS (Domain Name System) – Translates domain names (like google.com) into IP addresses.
+2. IP Address – Think of it as the digital home address for your device. done
+3. DNS (Domain Name System) – Translates domain names (like google.com) into IP addresses. done
 4. Proxy vs Reverse Proxy – One hides the client, the other protects the server. done
 5. Latency – Time taken for a request to travel and return.
-6. HTTP/HTTPS – The language your browser speaks with the web.
+6. HTTP/HTTPS – The language your browser speaks with the web. done
 7. API – Bridge for apps to communicate.
 8. REST API – The classic style for API calls (GET, POST, etc.).
 9. GraphQL – Ask for just the data you need.
@@ -37,3 +37,6 @@ Let’s break it down in simple terms:
 35. 𝐐𝐮𝐞𝐫𝐲 𝐎𝐩𝐭𝐢𝐦𝐢𝐳𝐚𝐭𝐢𝐨𝐧 -- DB done
 36. 𝐂𝐨𝐧𝐧𝐞𝐜𝐭𝐢𝐨𝐧 𝐏𝐨𝐨𝐥𝐢𝐧𝐠 -- DB done
 37.  𝐌𝐚𝐭𝐞𝐫𝐢𝐚𝐥𝐢𝐳𝐞𝐝 𝐕𝐢𝐞𝐰𝐬-- DB done
+38. Monolithic
+39. Event driven
+40. Domain Driven
