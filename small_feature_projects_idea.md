@@ -78,3 +78,14 @@
 
 
 ** make project handle thousands of api request to get data from db using caching
+
+
+
+** make order services using event driven architructure
+** make project use message queue, pub/sub, SRE, request/response
+** rate limiter project
+
+** build project with microservice architructure, use event driven, domain driven, message queue, pub/sub, SSE, request/response, rate limiter, caching, cdn, webhooks, idempotency,api gateway
+
+** use grpc in project make client and server..client make using django and server make using fastapi or vise barsa
+** makre crud application using graphql
