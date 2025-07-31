@@ -88,4 +88,5 @@
 ** build project with microservice architructure, use event driven, domain driven, message queue, pub/sub, SSE, request/response, rate limiter, caching, cdn, webhooks, idempotency,api gateway
 
 ** use grpc in project make client and server..client make using django and server make using fastapi or vise barsa
-** makre crud application using graphql
+** make crud application using graphql
+** use crud api using nosql

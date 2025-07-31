@@ -1240,3 +1240,131 @@ stream {
 **Scenario**: Client sends an HTTP request to an NGINX reverse proxy.
 ```
 GET /
+
+
+
+
+
+
+
+
+
+
+
+
+# What Happens When You Visit a Website — Step-by-Step Network Flow Explained (Linux Edition)
+Ever wondered how your browser connects to a website like `google.com`? From typing the URL to receiving the response, your system performs multiple network-layer tasks behind the scenes. This guide explains the process step-by-step using real Linux commands, focusing on DNS resolution, routing, ARP, gateway MAC address, NAT, and the response path.
+
+## Step 1: DNS Resolution – "What is the IP of google.com?"
+When you type `https://google.com` in your browser, your system resolves the domain name to an IP address.
+
+### Command
+```bash
+dig google.com +short
+```
+
+### Example Output
+```
+142.250.193.206
+```
+This is the public IP of Google’s server.
+
+## Step 2: Routing Decision – "Is this IP local or remote?"
+Your system checks if the destination IP is part of your local subnet by comparing:
+```
+(your IP) & (subnet mask) vs (destination IP) & (subnet mask)
+```
+- If they match, it's local → send directly using ARP.
+- If not, send to the default gateway (router).
+
+### Command to Check Routing Table
+```bash
+ip route
+```
+
+### Example Output
+```
+default via 192.168.0.1 dev wlp0s20f3
+192.168.0.0/24 dev wlp0s20f3 proto kernel scope link src 192.168.0.5
+```
+
+### Interpretation
+- **Your device IP**: `192.168.0.5`
+- **Subnet**: `/24` = `255.255.255.0` → range `192.168.0.0 – 192.168.0.255`
+- **Destination IP**: `142.250.193.206` (not in your subnet)
+- **Action**: Route to the default gateway (`192.168.0.1` – your router IP)
+
+## Step 3: ARP Lookup – "What is my router’s MAC address?"
+To send the packet, your system needs the MAC address of the router. If unknown, it sends an ARP broadcast: "Who has `192.168.0.1`? Tell `192.168.0.5`." The router replies with its MAC address.
+
+### Commands
+Ping the router to populate ARP:
+```bash
+ping -c 1 192.168.0.1
+```
+
+View ARP cache:
+```bash
+ip neigh show 192.168.0.1
+# or
+arp -n
+```
+
+### Sample Output
+```
+192.168.0.1 dev wlp0s20f3 lladdr aa:bb:cc:dd:ee:ff REACHABLE
+```
+Now your system knows the router’s MAC (`aa:bb:cc:dd:ee:ff`).
+
+## Step 4: Sending the Packet
+Your device builds:
+- **IP Packet**
+  - Source IP: `192.168.0.5`
+  - Dest IP: `142.250.193.206`
+  - Source Port: Random (e.g., `45678`)
+  - Dest Port: `443` (HTTPS)
+- **Ethernet Frame**
+  - Source MAC: Your device MAC
+  - Dest MAC: Router’s MAC
+
+The packet is sent to the router.
+
+## Step 5: Router Performs NAT (Network Address Translation)
+The router:
+- Replaces your private IP (`192.168.0.5`) with its public IP (e.g., `103.120.55.200`)
+- Changes source port if needed (e.g., `45678` → `60001`)
+- Stores this mapping in its NAT table:
+  ```
+  192.168.0.5:45678 → 103.120.55.200:60001
+  ```
+- Forwards the packet to Google's server.
+
+## Step 6: Google Responds
+Google replies to:
+- IP: `103.120.55.200`
+- Port: `60001`
+
+The router:
+- Looks up the NAT table
+- Finds that `60001` maps to `192.168.0.5:45678`
+- Rewrites the destination IP and port
+- Sends the response back to your device’s MAC address
+
+## Step 7: Browser Gets the Data
+Your system receives the reply, matches it to the browser connection, and the page loads!
+
+## Summary of Commands You Can Try
+| Task | Command |
+|------|---------|
+| Get your IP | `ip a` |
+| Get router IP | `ip route` |
+| Show routing table | `ip route` |
+| Resolve DNS | `dig google.com +short` |
+| Ping your router | `ping -c 1 192.168.0.1` |
+| Show ARP/MAC of router | `ip neigh show 192.168.0.1` or `arp -n` |
+
+## Key Notes
+- Devices in different networks will have different IPs and router IPs.
+- Even two routers on the same brand can have different defaults (`192.168.0.1`, `192.168.1.1`, etc.)
+- Router uses NAT and a mapping table (IP + Port) to know which device requested what.
+- The process is stateless for the browser but stateful for TCP and NAT.

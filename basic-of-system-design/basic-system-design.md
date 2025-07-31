@@ -3224,3 +3224,125 @@ mutation {
 GraphQL is not just a buzzword — it’s a paradigm shift. It empowers clients, reduces over-fetching, and allows real-time communication. But with power comes responsibility: you must handle performance, security, and error handling carefully.
 
 Use GraphQL when you need flexibility, nested resources, real-time updates, or complex frontend needs — and REST when you want simplicity, stability, and HTTP-native behavior.
+
+
+
+
+
+
+problem with relational database:
+
+hard to scale
+resource intensive
+
+
+nosql pros:
+flexible
+data sharding
+insertion & deletation
+schema is easily changable
+built for scale
+built for aggregation
+
+nosql cons:
+not built for update
+consistancy(ACID)
+read time are slower
+relation are not implicit
+join are hard
+
+
+nosql scale, partions, index, keyspace
+nosql is schemaless
+
+nosql limitation:
+loss of consistency
+
+nosql query limitations
+
+nosql eventually consistent
+
+
+how choose sql or nosql
+
+
+
+
+sql:
+relational
+vertically scale
+table based
+sql
+multirow transactions
+
+
+
+nosql:
+not relational
+horizontaly scale
+collection, documents, key value
+unstructured(json), dynamic
+
+real time data
+unpredictable inputs and user behavior
+
+
+nosql database usage log structured merge tree (LSM tree)
+
+memory->memtable-> balanced binary tree
+
+disk-> sort & flush data from memtable to sstable 
+
+delete object from nosql how does it work
+
+nosql caching, pagination, filter, aggregation, avg
+
+norelational databases are key-value, column store, graph dbs, document store
+
+nosql create, update, delete object
+how nosql indexing work
+
+
+
+
+
+ci/cd:
+
+
+github actions runner types:
+
+github hosted runner:
+github hosted and maintained
+provides a clean VM for every job execution
+cannot customize runners beyond selecting the type of runner(ubuntu,windows,macOS)
+
+self hosted runner:
+run on your own infrastructure, such as your own servers, virtual machines, or even in cloud
+can run multiple jobs on the same machine
+you have complete control over the runners evironment and can install any required software
+
+github actions core concept:
+workflow
+jobs
+steps
+
+actions
+multi line command
+executing third party library
+executing shell script workflow
+workflow with multiple jobs
+workflow with multiple jobs executing sequence
+storing workflow data as artifacts
+working with env variables at different levels (env at job level and workflow level)
+working with repository level secrets
+
+events triggering workflow. like(push, schedule, workflow_dispatch etc.)
+
+using job concurrency
+timeout for jobs and steps (timeout can use job level and step level)
+using matrix strategy, matrix,include, exclude, fail-fast, max-parallal
+
+access worflow context information: most common use context variable(github,env,vars,job,jobs,steps,runner,secrets,matrix,needs,inputs,strategy)
+github action expressions: use expressions to programmatically execute jobs and steps based on conditions. expressions are: if
+workflow event filters and activity types
+cancelling and skipping workflow

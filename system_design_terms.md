@@ -47,6 +47,7 @@ Let’s break it down in simple terms:
 34. strong vs eventualy consistent -- DB done
 33. batch and stream processing -- DB done
 22. Blob Storage – For large files like images & videos. -- DB done
+11. SQL vs NoSQL – Tables & schema vs flexible JSON-style storage. -- DB  done
 
 
 
@@ -55,7 +56,7 @@ Let’s break it down in simple terms:
 
 
 
-11. SQL vs NoSQL – Tables & schema vs flexible JSON-style storage. -- DB
+authentications:  basic authentication, jwt authentication, session based authentication, oauth2.0, api key authentication
 
 
 Bloom Filters

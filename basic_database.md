@@ -6068,3 +6068,17 @@ No single storage type is best for every use case — cloud architectures often 
 - Archive and serve media using object storage
 
 Modern cloud platforms make it easy to integrate and scale each one. Choosing the right type can drastically impact your app’s performance, cost, and reliability.
+
+
+
+
+
+
+What happens when databases crash mid backend request?
+
+
+
+
+
+
+
