@@ -18,3 +18,8 @@ summ of all nodes
 sum of all leafs
 
 sum of kth level nodes
+
+total nodes
+
+
+subtree in binary tree
