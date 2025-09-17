@@ -1,9 +1,15 @@
+parent
+children
+branches
+sibling
+
 root node
 left node
 right node
 leafs
 height
 diameater
+levels
 
 subtree
 
@@ -12,6 +18,8 @@ preorder
 inorder
 postorder
 levelorder
+
+build_tree
 
 summ of all nodes
 

@@ -7,6 +7,7 @@ class Node:
         self.left = left
         self.right = right
         
+nodes = [1,2,4,-1,-1,5,-1,-1,3,-1,6,-1,-1]
 
 class BinaryTree:
     def __init__(self):
@@ -112,6 +113,65 @@ class BinaryTree:
         right_total = self.total_nodes(root.right)
         return 1 + left_total + right_total
     
+    def isIdentical(self, root, subRoot):
+        if root is None and subRoot is None:
+            return True
+        if root is None or subRoot is None:
+            return False
+        
+        if root.val == subRoot.val:
+            return self.isIdentical(root.left, subRoot.left) and self.isIdentical(root.right, subRoot.right)
+        return False
+
+    def isSubtree(self, root, subRoot) -> bool:
+        if subRoot is None:
+            return True
+        if root is None:
+            return False
+
+        if root.val == subRoot.val:
+            if self.isIdentical(root, subRoot):
+                return True
+        
+        return self.isSubtree(root.left, subRoot) or self.isSubtree(root.right, subRoot)
+    
+    
+    def sum_of_all_leafs(self, root):
+        if root is None:
+            return 0
+        left_sum = self.sum_of_all_leafs(root.left)
+        right_sum = self.sum_of_all_leafs(root.right)
+        
+        if root.left is None and root.right is None:
+            return root.val + left_sum + right_sum
+        return 0 + left_sum + right_sum
+    
+    def sum_of_all_leafs_two(self, root):
+        if root is None:
+            return 0
+        
+        if root.left is None and root.right is None:
+            return root.val
+        
+        return self.sum_of_all_leafs_two(root.left) + self.sum_of_all_leafs_two(root.right)
+    
+    def sum_of_kth_level_nodes(self, root, k):
+        q = deque()
+        res = 0
+        q.append([1,root])
+        
+        while q:
+            current = q.popleft()
+            level, node = current[0], current[1]
+            if level == k:
+                res += node.val
+            
+            if node.left:
+                q.append([level + 1, node.left])
+            if node.right:
+                q.append([level + 1, node.right])
+        return res
+    
 nodes = [1,2,4,-1,-1,5,-1,-1,3,-1,6,-1,-1]
 
 binary_tree = BinaryTree()
@@ -132,3 +192,6 @@ print("diameter:", binary_tree.diameter(root))
 print("optimize diameter:", binary_tree.optimize_diameter(root))
 print("sum of all nodes:", binary_tree.sum_of_all_nodes(root))
 print("total nodes:", binary_tree.total_nodes(root))
+
+print("sum of all leafs:", binary_tree.sum_of_all_leafs_two(root))
+print("sum of kth level nodes:", binary_tree.sum_of_kth_level_nodes(root, 2))
