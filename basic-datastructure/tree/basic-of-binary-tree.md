@@ -52,6 +52,89 @@ Traversal involves visiting each node in a tree exactly once. The following meth
    Example: `1 2 3 4 5 6 7`
 
 
+## 1. Complete Binary Tree
+
+A binary tree is **complete** if:
+- All levels, except possibly the last, are completely filled.
+- In the last level, all nodes are as far left as possible (no gaps between nodes).
+
+### Example (Complete but not full):
+```
+        1
+      /   \
+     2     3
+    / \   /
+   4   5 6
+```
+- The last level (nodes 4, 5, 6) is filled left to right with no gaps.
+- This tree is complete but not full because node 3 has only one child.
+
+## 2. Full Binary Tree (Proper/Strict Binary Tree)
+
+A binary tree is **full** if:
+- Every node has either **0 or 2 children** (no node has exactly one child).
+
+### Example (Not Full):
+```
+        1
+      /   \
+     2     3
+    / \     \
+   4   5     6   ❌ (not full — node 3 has only one child)
+```
+
+### Example (Full):
+```
+        1
+      /   \
+     2     3
+    / \   / \
+   4   5 6   7   ✅ (full — every node has 0 or 2 children)
+```
+
+## 3. Perfect Binary Tree
+
+A binary tree is **perfect** if:
+- It is both **full** and **complete**.
+- All internal nodes have **2 children**.
+- All leaf nodes are at the **same depth/level**.
+
+### Example:
+```
+        1
+      /   \
+     2     3
+    / \   / \
+   4   5 6   7
+```
+- Every level is fully filled.
+- All nodes have either 0 or 2 children.
+- All leaves (4, 5, 6, 7) are at the same level (level 2).
+- This tree is **perfect** (and thus also full and complete).
+
+## 4. Binary Search Tree (BST) Reminder
+
+The terms **complete**, **full**, and **perfect** describe the **shape** of a binary tree. A **Binary Search Tree (BST)** adds an **ordering property**:
+- For any node:
+  - Values in the **left subtree** are **smaller** than the node’s value.
+  - Values in the **right subtree** are **larger** than the node’s value.
+
+### Combining BST with Tree Shapes
+A BST can also have the properties of being complete, full, or perfect:
+- **Complete BST**: Follows BST ordering and is complete (all levels filled except possibly the last, with nodes in the last level as far left as possible).
+- **Full BST**: Follows BST ordering and is full (every node has 0 or 2 children).
+- **Perfect BST**: Follows BST ordering and is perfect (both full and complete, with all leaves at the same level).
+
+## ✅ Summary Table
+
+| Term       | Condition                                                                 |
+|------------|---------------------------------------------------------------------------|
+| **Complete** | All levels filled except possibly the last, last level filled left-to-right. |
+| **Full**     | Every node has 0 or 2 children (no node has exactly one child).            |
+| **Perfect**  | Both full and complete, all leaves at the same level.                      |
+| **BST**      | Ordering property: left subtree < root < right subtree.                    |
+
+
 
 some coding problems of binary tree:
 build_tree
