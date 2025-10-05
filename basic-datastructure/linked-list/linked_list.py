@@ -108,18 +108,47 @@ class LinkedList:
             temp = temp.next
         
         return False
-        
+    
             
     
-    def print(self):
-        temp = self.head
+    def print(self, head=None):
+        if head:
+            temp = head
+        else:
+            temp = self.head
         
         while temp:
             print(temp.val, end="->")
             temp = temp.next
         print("null")
+        
+    
+    def reverse(self):        
+        prev = None
+        curr = self.head
+        next = None
+        
+        while curr:
+            next = curr.next
+            curr.next = prev
+            prev = curr
+            curr = next
+        
+        self.head = prev
+        return prev
 
 
+    def middle(self):
+        slow = self.head
+        fast = self.head
+        
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+        print("middle value:",slow.val)
+    
+    
+    
 ll = LinkedList()
 
 # build linked list
@@ -146,3 +175,7 @@ ll.print()
 ll.insert(3,2)
 ll.print()
 print('found:', ll.search(4))
+r_head = ll.reverse()
+ll.print(r_head)
+ll.print()
+ll.middle()
