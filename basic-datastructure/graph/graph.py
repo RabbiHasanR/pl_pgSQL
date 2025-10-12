@@ -1,4 +1,5 @@
 from collections import deque
+import heapq
 
 class Edge:
     def __init__(self, src, dest, weight=0):
@@ -58,8 +59,98 @@ def printAllPath(graph, start, visited, path, tar):
             printAllPath(graph, v, visited, path + str(v), tar)
             visited[v] = False
     # visited[start] = False
-             
+
+
+def create_directed_weighted_graph(v=6):
+    
+    graph = [[] for _ in range(v)]
+       
+    add_edge(graph, Edge(0, 1, 2))
+    add_edge(graph, Edge(0, 2, 4))
+       
+    add_edge(graph, Edge(1, 3, 7))
+    add_edge(graph, Edge(1, 2, 1))
+       
+    add_edge(graph, Edge(2, 4, 3))
+       
+    add_edge(graph, Edge(3, 5, 1))
+       
+    add_edge(graph, Edge(4, 3, 2))
+    add_edge(graph, Edge(4, 5, 5))
+       
+    return graph
+       
+
+def disjkstra(graph, src):
+    v = len(graph)
+    dist = [float("inf")] * v
+    dist[src] = 0
+    vis = [False] * v
+    pq = []
+    
+    heapq.heappush(pq, (0, src))
+    
+    while pq:
+        d, n = heapq.heappop(pq)
+        if not vis[n]:
+            vis[n] = True
+            for edge in graph[n]:
+                u = edge.src
+                v = edge.dest
                 
+                if dist[u] + edge.weight < dist[v]:
+                    dist[v] = dist[u] + edge.weight
+                    heapq.heappush(pq, (dist[v], v))
+    
+    for d in dist:
+        print(d, end=" ")
+    
+    print()
+    
+    
+def create_directed_wighted_graph_for_bellman(v = 5):
+    graph = [[] for _ in range(v)]
+    
+    add_edge(graph, Edge(0, 1, 2))
+    add_edge(graph, Edge(0, 2, 4))
+    
+    add_edge(graph, Edge(1, 2, -4))
+    
+    add_edge(graph, Edge(2, 3, 2))
+    
+    add_edge(graph, Edge(3, 4, 4))
+    
+    add_edge(graph, Edge(4, 1, -1))
+    
+    return graph
+
+def bellamn_ford(graph, src):
+    ver = len(graph)
+    dis = [float("inf")] * ver
+    dis[src] = 0
+    for k in range(ver-1):
+        for i in range(ver):
+            for edge in graph[i]:
+                u = edge.src
+                v = edge.dest
+                w = edge.weight
+                
+                if dis[u] != float('inf') and dis[u] + w < dis[v]:
+                    dis[v] = dis[u] + w
+                    
+    # detect negative weight cycle
+    for i in range(ver):
+        for edge in graph[i]:
+            u = edge.src
+            v = edge.dest
+            w = edge.weight
+            
+            if dis[u] != float('inf') and dis[u] + w < dis[v]:
+                print("negative weight cycle")
+    
+    for d in dis:
+        print(d, end=" ")
+    print()
     
 def create_undirected_graph(v=4):
     graph = [[] for _ in range(v)]
@@ -121,6 +212,8 @@ def isCycleUndirected(graph, curr, vis, par):
                 return True
     return False
 
+
+
 graph = create_undirected_graph()
 print_vertex_neighbours(graph, 2)
 
@@ -161,3 +254,15 @@ print('is cycle directed graph:',isCycleDirected(directed_graph, vis, 0, rec))
 
         
 print('topological short:', topSort())
+
+
+
+# shortest path algo
+
+graph = create_directed_weighted_graph()
+
+disjkstra(graph, 2)
+
+graph = create_directed_wighted_graph_for_bellman()
+
+bellamn_ford(graph, 0)

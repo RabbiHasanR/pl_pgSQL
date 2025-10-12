@@ -66,3 +66,10 @@ It is a linear order of vertices such that every directed edge u -> v, the verte
 undirected graph cycle detection technique: DFS, BFS, DSU(Disjoint Set Union)
 
 directed path cycle detection technique: DFS,BFS, Topological sorting, graphcolory
+
+
+shortest path algorithm:
+
+Dijkstra's algorithm: shortest distance from the source to all vertices. when edge weight is positive then its work. this is greedy type. this time complexity is smaller then bellam ford algorithm
+
+Bellman Ford Algorithm: Shortest distance from the source to all vertices. this is dp(dynamic programming) type. bellamn ford doesn't work for negative weight cycles
