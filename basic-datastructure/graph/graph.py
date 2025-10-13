@@ -173,6 +173,93 @@ def create_directed_graph(v=4):
     return graph
 
 
+def create_graph_for_mst(v=4):
+    graph = [[] for _ in range(v)]
+    
+    add_edge(graph, Edge(0, 1, 10))
+    add_edge(graph, Edge(0, 2, 15))
+    add_edge(graph, Edge(0, 3, 30))
+    
+    add_edge(graph, Edge(1, 0, 10))
+    add_edge(graph, Edge(1, 3, 40))
+    
+    add_edge(graph, Edge(2, 0, 15))
+    add_edge(graph, Edge(2, 3, 50))
+    
+    add_edge(graph, Edge(3, 1, 40))
+    add_edge(graph, Edge(3, 2, 50))
+    
+    return graph
+
+def mst(graph, src):
+    cost = 0
+    v = len(graph)
+    vis = [False] * v
+    pq = []
+    heapq.heappush(pq, (0, src))
+    
+    while pq:
+        d, n = heapq.heappop(pq)
+        if not vis[n]:
+            vis[n] = True
+            cost += d
+            for edge in graph[n]:
+                if not vis[edge.dest]:
+                    heapq.heappush(pq, (edge.weight, edge.dest))
+    return cost
+
+
+def created_directed_scc_graph(v=5):
+    graph = [[] for _ in range(v)]
+    
+    add_edge(graph, Edge(0,2))
+    add_edge(graph, Edge(0,3))
+    
+    add_edge(graph, Edge(1,0))
+    
+    add_edge(graph, Edge(2,1))
+    
+    add_edge(graph, Edge(3,4))
+    
+    return graph
+
+def topoSort(graph, i, vis, stack):
+    vis[i] = True
+    for edge in graph[i]:
+        if not vis[edge.dest]:
+            topoSort(graph, edge.dest, vis, stack)
+    stack.append(i)
+    
+def kosarajudfs(graph, curr, vis):
+    vis[curr] = True
+    print(curr, end=" ")
+    for edge in graph[curr]:
+        if not vis[edge.dest]:
+            dfs(graph, edge.dest, vis)
+
+def kosarajuAlgo(graph):
+    v = len(graph)
+    
+    stack = []
+    vis = [False] * v
+    
+    for i in range(v):
+        if not vis[i]:
+            topoSort(graph, i, vis, stack)
+    
+    transpose_graph = [[] for _ in range(v)]
+    
+    for i in range(v):
+        vis[i] = False
+        for edge in graph[i]:
+            transpose_graph[edge.dest].append(Edge(edge.dest, edge.src))
+    
+    while stack:
+        curr = stack.pop()
+        if not vis[curr]:
+            kosarajudfs(transpose_graph, curr, vis)
+            print()
+
 def isCycleDirected(graph, vis, curr, rec):
     vis[curr] = True
     rec[curr] = True
@@ -266,3 +353,13 @@ disjkstra(graph, 2)
 graph = create_directed_wighted_graph_for_bellman()
 
 bellamn_ford(graph, 0)
+
+
+graph = create_graph_for_mst()
+
+print('mst:', mst(graph, 0))
+
+print('Strongly connected graph')
+graph = created_directed_scc_graph()
+
+kosarajuAlgo(graph)

@@ -73,3 +73,23 @@ shortest path algorithm:
 Dijkstra's algorithm: shortest distance from the source to all vertices. when edge weight is positive then its work. this is greedy type. this time complexity is smaller then bellam ford algorithm
 
 Bellman Ford Algorithm: Shortest distance from the source to all vertices. this is dp(dynamic programming) type. bellamn ford doesn't work for negative weight cycles
+
+
+Minimum Spanning Tree(MST): A minimum spanning tree or minimum weight spanning tree is a subset of the edges of a connected, edge-weighted undirected graph that connects all the vertices together, without any cycles and wit the minimum possible total edge weight
+
+attributes of MST: 
+undirected, all vertics, all vertices connected, not cycle, edge weight minimum
+Prims Algorithm
+
+
+strongly connected component: SCC is a component in which we can reach every vertext of the component from every other vertex in that component. this work only for directed graph
+Kosaraju's algorithm: reverse dfs 
+
+steps:
+1.get nodes in stack (topological sort)
+2.transpose the graph
+3.do dfs according to stack nodes on the transpose graph
+
+
+Bridge in graphs: Bridge is an adge whose deletion increases the graph's number of connected components.
+Tarjan's Algorithm
