@@ -223,6 +223,8 @@ def created_directed_scc_graph(v=5):
     
     return graph
 
+
+
 def topoSort(graph, i, vis, stack):
     vis[i] = True
     for edge in graph[i]:
@@ -259,6 +261,118 @@ def kosarajuAlgo(graph):
         if not vis[curr]:
             kosarajudfs(transpose_graph, curr, vis)
             print()
+            
+
+def create_graph_for_bridge(v=6):
+    v = 5
+    graph = [[] for _ in range(v)]
+    
+    add_edge(graph, Edge(0,1))
+    add_edge(graph, Edge(0,2))
+    add_edge(graph, Edge(0,3))
+    
+    add_edge(graph, Edge(1,0))
+    add_edge(graph, Edge(1,2))
+    
+    add_edge(graph, Edge(2,0))
+    add_edge(graph, Edge(2,1))
+    
+    add_edge(graph, Edge(3,0))
+    add_edge(graph, Edge(3,4))
+    # add_edge(graph, Edge(3,5))
+    
+    add_edge(graph, Edge(4,3))
+    # add_edge(graph, Edge(4,5))
+    
+    # add_edge(graph, Edge(5,3))
+    # add_edge(graph, Edge(5,4))
+    
+    return graph
+
+
+def bridge_dfs(graph, curr, vis, dt, low_dt, time, par):
+    vis[curr] = True
+    time[0] += 1
+    dt[curr] = time[0]
+    low_dt[curr] = time[0]
+    for edge in graph[curr]:
+        if edge.dest == par:
+            continue
+        elif not vis[edge.dest]:
+            bridge_dfs(graph, edge.dest, vis, dt, low_dt, time, curr)
+            low_dt[curr] = min(low_dt[curr], low_dt[edge.dest])
+            if dt[curr] < low_dt[edge.dest]:
+                print(f"bridge is: {curr}-----{edge.dest}")
+        else:
+            low_dt[curr] = min(low_dt[curr], dt[edge.dest])
+
+def getBridge(graph):
+    v = len(graph)
+    dt = [0] * v
+    low_dt = [0] * v
+    time = [0]
+    vis = [False] * v
+    for i in range(v):
+        if not vis[i]:
+            bridge_dfs(graph, i, vis, dt, low_dt, time, -1)
+            
+            
+def create_graph_arp(v=5):
+    graph = [[] for _ in range(v)]
+    
+    add_edge(graph, Edge(0,1))
+    add_edge(graph, Edge(0,2))
+    add_edge(graph, Edge(0,3))
+    
+    add_edge(graph, Edge(1,0))
+    add_edge(graph, Edge(1,2))
+    
+    add_edge(graph, Edge(2,0))
+    add_edge(graph, Edge(2,1))
+    
+    add_edge(graph, Edge(3,0))
+    add_edge(graph, Edge(3,4))
+    
+    add_edge(graph, Edge(4,3))
+    
+    return graph
+
+
+def dfs_ap(graph, curr, par, dt, low, vis, time, ap):
+    vis[curr] = True
+    time[0] += 1
+    dt[curr] = low[curr] = time[0]
+    children = 0
+    for edge in graph[curr]:
+        if par == edge.dest:
+            continue
+        elif vis[edge.dest]:
+            low[curr] = min(low[curr], dt[edge.dest])
+        else:
+            dfs_ap(graph, edge.dest, curr, dt, low, vis, time, ap)
+            low[curr] = min(low[curr], low[edge.dest])
+            if dt[curr] <= low[edge.dest] and par != -1:
+                ap[curr] = True
+            children += 1
+    
+    if par == -1 and children > 1:
+        ap[curr] = True
+
+def getAP(graph):
+    v = len(graph)
+    dt = [0] * v
+    low = [0] * v
+    time = [0]
+    vis = [False] * v
+    ap = [False] * v
+    
+    for i in range(v):
+        if not vis[i]:
+            dfs_ap(graph, i, -1, dt, low, vis, time, ap)
+            
+    for i in range(v):
+        if ap[i]:
+            print("AP:", i)
 
 def isCycleDirected(graph, vis, curr, rec):
     vis[curr] = True
@@ -363,3 +477,13 @@ print('Strongly connected graph')
 graph = created_directed_scc_graph()
 
 kosarajuAlgo(graph)
+
+print("find bridge:")
+
+graph = create_graph_for_bridge()
+
+getBridge(graph)
+
+print("find Articulation point:")
+graph = create_graph_arp()
+getAP(graph)

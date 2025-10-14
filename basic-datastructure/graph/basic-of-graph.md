@@ -93,3 +93,6 @@ steps:
 
 Bridge in graphs: Bridge is an adge whose deletion increases the graph's number of connected components.
 Tarjan's Algorithm
+
+Articulation point: A vertex in an undirected connected graph is an articulation point (or cut vertex) if removing it (and edges through it) disconnects the graph.
+Ancestor: a node A that was discovered before curr node in dfs, is the ancestor of curr.
