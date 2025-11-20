@@ -238,3 +238,5 @@ Functional Programming: Practical use of lambda, map, filter, and list comprehen
 Typing: Fluency with Python's type hinting system (mypy). This is non-negotiable for writing maintainable, large-scale applications.
 
 Packaging: Creating and distributing your own packages using pyproject.toml and tools like Poetry or setuptools.
+
+

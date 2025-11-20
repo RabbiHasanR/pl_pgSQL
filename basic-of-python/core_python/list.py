@@ -53,6 +53,8 @@ print(fruits[-2])
 
 # step: The gap between items (default is 1).
 
+# slicing time O(k) ans space(k)
+
 numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 # Get items from index 2 up to (but not including) index 5
@@ -201,3 +203,33 @@ for num in numbers:
 # 2
 # 3
 # 4
+
+
+
+
+
+
+import dis
+
+def create_list():
+    return [1, 2, 3]
+
+def create_tuple():
+    return (1, 2, 3)
+
+print("--- List Function One ---")
+dis.dis(create_list)
+
+# --- List Function One ---
+#   4           0 BUILD_LIST             0
+#               2 LOAD_CONST             1 ((1, 2, 3))
+#               4 LIST_EXTEND            1
+#               6 RETURN_VALUE
+
+
+print("\n--- Tuple Function One ---")
+dis.dis(create_tuple)
+
+# --- Tuple Function One ---
+#  10           0 LOAD_CONST             1 ((1, 2, 3))
+#               2 RETURN_VALUE
